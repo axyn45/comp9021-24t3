@@ -24,7 +24,7 @@ def card(n,returnIdx=False):
 def isPicture(n):
     return True if n%13>9 else False
 
-def play(deck,seedIn=0):
+def play(deck,seedIn=0,mute=False):
     def drawCards(deck):
         cards=[]
         for i in range(len(deck)-1,len(deck)-17,-1):
@@ -32,7 +32,8 @@ def play(deck,seedIn=0):
             del deck[i]
         return cards
     
-    def displayCards(cards):
+    def displayCards(cards,mute=False):
+        if(mute):return
         line=''
         for i in range(len(cards)):
             line=line+f'\t{card(cards[i])}'
@@ -58,33 +59,33 @@ def play(deck,seedIn=0):
                 del deck[-1]
         return ct
     deck.sort()
+    # print('----',seedIn)
     seed(seedIn)
     shuffle(deck)
     ondesk=[]
-    print(f'\nDrawing and placing {16-len(ondesk)} cards:')
+    myprint(f'\nDrawing and placing {16-len(ondesk)} cards:',mute)
     ondesk=drawCards(deck)
-    print(']'*len(deck))
-    displayCards(ondesk)
+    myprint(']'*len(deck),mute)
+    displayCards(ondesk,mute)
     picCount=putAside(ondesk)
     while(not picCount==0):
-        print(f'\nPutting {picCount} {'pictures' if picCount>1 else 'picture'} aside:')
+        myprint(f'\nPutting {picCount} {'pictures' if picCount>1 else 'picture'} aside:',mute)
         picCount=putAside(ondesk)
-        displayCards(ondesk)
+        displayCards(ondesk,mute)
         if(isWinning(len(deck)+len(ondesk)-picCount)==1): 
-            print('\nYou uncovered all pictures, you won!')
-            return True
-        print(f'\nDrawing and placing {picCount} {'cards' if picCount>1 else 'card'}:')
+            myprint('\nYou uncovered all pictures, you won!',mute)
+            return 12
+        myprint(f'\nDrawing and placing {picCount} {'cards' if picCount>1 else 'card'}:',mute)
         picCount=replaceCards(ondesk,deck)
-        print(']'*len(deck))
-        displayCards(ondesk)
+        myprint(']'*len(deck),mute)
+        displayCards(ondesk,mute)
     deck.extend(ondesk[::-1])
     if(isWinning(len(deck))==-1): 
-            print(f'\nYou uncovered only {52-len(deck)} pictures, you lost!')
-            return True
+            myprint(f'\nYou uncovered only {52-len(deck)} pictures, you lost!',mute)
+            return 52-len(deck)
     
-    global playedrounds
-    playedrounds=playedrounds+1
-    return False
+    increRounds()
+    return -1
 
 def isWinning(leftcards):
     global playedrounds
@@ -95,22 +96,56 @@ def isWinning(leftcards):
         return -1
     else: return 0
 
+def myprint(str,mute=False,myend='\n'):
+    if(not mute):
+        print(str,end=myend)
 
-def game():
+def increRounds():
+    global playedrounds
+    playedrounds=playedrounds+1
+
+def resetRounds():
+    global playedrounds
+    playedrounds=0
+
+def game(seedparam=None,mute=False):
     
-    seed_in=int(input('Please enter an integer to feed the seed() function: '))
+    if(seedparam==None):seed_in=int(input('Please enter an integer to feed the seed() function: '))
+    else:seed_in=int(seedparam)
     deck=list(range(52))
-    print('\nDeck shuffled, ready to start!\n]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')
+    myprint('\nDeck shuffled, ready to start!\n]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]',mute)
     for i in range(4):
         match i:
             case 0:
-                print('\nStarting first round...')
+                myprint('\nStarting first round...',mute)
             case 1:
-                print('\nAfter shuffling, starting second round...')
+                myprint('\nAfter shuffling, starting second round...',mute)
             case 2:
-                print('\nAfter shuffling, starting third round...')
+                myprint('\nAfter shuffling, starting third round...',mute)
             case 3:
-                print('\nAfter shuffling, starting fourth round...')
-        if(play(deck,seed_in+i)): break
+                myprint('\nAfter shuffling, starting fourth round...',mute)
+        # if(): return 0
+        result=play(deck,seed_in+i,mute)
+        if(result!=-1):
+            resetRounds()
+            return result
 
-game()
+def simulate(n,i):
+    # print(n,i)
+    lut={}
+    for j in range(n):
+        result=game(i+j,True)
+        # print(j,result,'-----------------------------------------------------------')
+        lut[result]=1 if(result not in lut) else lut[result]+1
+    print('Number of uncovered pictures | Frequency\n----------------------------------------')
+    # lut=sorted(lut)
+    # print(lut)
+
+    for k in sorted(lut):
+        print(str(k).rjust(28),'|',f'{lut[k]/n*100:,.2f}%'.rjust(9))
+
+
+if __name__ == "__main__":
+    # simulate(500,11)
+    game()
+    # print(game())
