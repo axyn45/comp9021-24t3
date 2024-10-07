@@ -2,6 +2,8 @@ from itertools import chain
 from random import seed, shuffle
 from collections import defaultdict
 
+playedrounds=0
+
 def card(n,returnIdx=False):
     if(n==-1):return ''
 
@@ -31,12 +33,13 @@ def play(deck,seedIn=0):
         return cards
     
     def displayCards(cards):
-        # print(']'*len(deck))
-        # print(cards)
-        # cardChrs=[card(i) for i in cards]
+        line=''
         for i in range(len(cards)):
-            print(f'\t{card(cards[i])}',end='')
-            if((i+1)%4==0):print()
+            line=line+f'\t{card(cards[i])}'
+            # print(f'\t{card(cards[i])}',end='')
+            if((i+1)%4==0):
+                print(line.rstrip())
+                line=''
     
     def putAside(cards):
         ct=0
@@ -54,50 +57,49 @@ def play(deck,seedIn=0):
                 if(isPicture(cards[i])):ct=ct+1
                 del deck[-1]
         return ct
-    # print(seedIn)
+    deck.sort()
     seed(seedIn)
     shuffle(deck)
     ondesk=[]
     print(f'\nDrawing and placing {16-len(ondesk)} cards:')
     ondesk=drawCards(deck)
     print(']'*len(deck))
-    # print(ondesk)
     displayCards(ondesk)
     picCount=putAside(ondesk)
-    # print(ondesk)
     while(not picCount==0):
         print(f'\nPutting {picCount} {'pictures' if picCount>1 else 'picture'} aside:')
+        picCount=putAside(ondesk)
         displayCards(ondesk)
-        print(f'\nDrawing and placing {picCount} cards:')
+        if(isWinning(len(deck)+len(ondesk)-picCount)==1): 
+            print('\nYou uncovered all pictures, you won!')
+            return True
+        print(f'\nDrawing and placing {picCount} {'cards' if picCount>1 else 'card'}:')
         picCount=replaceCards(ondesk,deck)
         print(']'*len(deck))
         displayCards(ondesk)
     deck.extend(ondesk[::-1])
+    if(isWinning(len(deck))==-1): 
+            print(f'\nYou uncovered only {52-len(deck)} pictures, you lost!')
+            return True
+    
+    global playedrounds
+    playedrounds=playedrounds+1
+    return False
 
-
-        
-
-
+def isWinning(leftcards):
+    global playedrounds
+    pct=52-leftcards
+    if(pct==12):
+        return 1
+    elif(playedrounds==3): 
+        return -1
+    else: return 0
 
 
 def game():
-    def isWinning(r,deck):
-        pct=52-len(deck)
-        if(pct==12):
-            print('\nYou uncovered all pictures, you won!')
-            return True
-        elif(r==3): 
-            print(f'\nYou uncovered only {pct} pictures, you lost!')
-            return False
-        else: return False
+    
     seed_in=int(input('Please enter an integer to feed the seed() function: '))
-    # seed_in=0
-    # print(type(seed_in))
-    # seed(seed_in)
     deck=list(range(52))
-    # shuffle(deck)
-    # print(deck)
-    # deck=deck[51:35:-1]
     print('\nDeck shuffled, ready to start!\n]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')
     for i in range(4):
         match i:
@@ -109,50 +111,6 @@ def game():
                 print('\nAfter shuffling, starting third round...')
             case 3:
                 print('\nAfter shuffling, starting fourth round...')
-        play(deck,seed_in+i)
-        # print(deck)
-        if(isWinning(i,deck) or i==3): break
-        # elif(i==3): 
-    # play(deck,seed_in)
-    # print('\nAfter shuffling, starting second round...')
-    # if(52-len(deck)==12):
-    #     print('\nYou uncovered all pictures, you won!')
-    #     return
-    # play(deck,seed_in+1)
-    # print('\nAfter shuffling, starting third round...')
-
-    # if(52-len(deck)==12):
-    #     print('\nYou uncovered all pictures, you won!')
-    #     return
-    # play(deck,seed_in+2)
-    # print('\nAfter shuffling, starting fourth round...')
-
-    # if(52-len(deck)==12):
-    #     print('\nYou uncovered all pictures, you won!')
-    #     return
-    # play(deck,seed_in+3)
-    
-    # print(52-len(deck))
-    # print(deck)
-    # for i in range(len(deck)):
-    #     print(card(deck[i]),end='')
-
-        # if i%8==0: print()
-    # print('\nDeck shuffled, ready to start!\U0001F0A8')
-    # print(']'*52)
-    # print('\nStarting first round...')
-    # print('Drawing and placing 16 cards:')
-    # print(']'*(52-16))
-# INSERT YOUR CODE HERE
-
-# seed(0)
-# a=list(range(52))
-# shuffle(a)
-# print(a,card(24))
+        if(play(deck,seed_in+i)): break
 
 game()
-# print(card(25))
-# if(isPicture(25)):print('yes')
-# for i in list(range(52)):
-#     if(isPicture(i)):
-#         print(i,card(i),'yes')
