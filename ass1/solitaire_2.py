@@ -26,12 +26,15 @@ def translateCard(n):
 
         
 def play(seedIn,deck,desk):
+
     def drawCards(deck,hand):
-        if(len(deck)==0): return hand.append(-1)
-        drawLen=min(3,len(deck))
-        # hand.extend(deck[-drawLen:])
-        newhand=deck[-drawLen:]+hand
-        for i in range(drawLen):
+        if(len(deck)<3): 
+            return hand+[-1]
+        # s
+        newhand=deck[-3:]+hand
+        print('------------------------------------')
+        # print(newhand)
+        for i in range(3):
             del deck[-1]
         # print('hand',hand)
         return newhand
@@ -45,28 +48,34 @@ def play(seedIn,deck,desk):
     while(not len(deck)==0):
         # if(drawCards(deck,onfly)==False): break
         onfly=drawCards(deck,onfly)
-        
+        input()
+        print('-----------------------------')
+        print(onfly)
         for i in onfly:
             if(i==-1):break
             loc=-1
             coord=translateCard(i)
+            # print(coord,end='')
             if(coord[1]==0):
                 loc=coord[0]%4
             elif(coord[1]==12):
                 loc=4+coord[0]%4
-            elif(len(desk[coord[0]%4]) and len(desk[4+coord[0]%4])):
+            elif(len(desk[coord[0]%4])>0 and coord[1]==desk[coord[0]%4][-1]+1):
+                print((desk[coord[0]%4][-1],i))
                 loc=coord[0]%4
-            elif(len(desk[coord[0]%4]) and desk[coord[0]%4][-1]+1==coord[1]):
+            elif(len(desk[4+coord[0]%4])>0 and coord[1]==desk[4+coord[0]%4][-1]-1):
+                print((desk[4+coord[0]%4][-1],i))
                 loc=coord[0]%4
-            elif(len(desk[4+coord[0]%4]) and desk[4+coord[0]%4][-1]+1==coord[1]):
-                loc=4+coord[0]%4
+            # elif(len(desk[coord[0]%4]) and desk[coord[0]%4][-1]+1==coord[1]):
+            #     loc=coord[0]%4
+            # elif(len(desk[4+coord[0]%4]) and desk[4+coord[0]%4][-1]+1==coord[1]):
+            #     loc=4+coord[0]%4
             if(not loc==-1):
                 desk[loc].append(i)
                 onfly.remove(i)
             else:
                 # print('bk',i)
                 break
-        print('-----------------------------')
         print(deck)
         print(onfly)
         print(desk)
@@ -87,6 +96,7 @@ def game(seedin=None):
     if(seedin is None):
         seedIn=input('Please enter an integer to feed the seed() function: ')
     else: seedIn=seedin
+    seedIn=int(seedIn)
     deck=list(range(52))
     desk=[[] for i in range(8)]
     play(seedIn,deck,desk)
@@ -96,4 +106,4 @@ def game(seedin=None):
 
 if __name__ == "__main__":
     # simulate(500,11)
-    game()
+    game(0)
