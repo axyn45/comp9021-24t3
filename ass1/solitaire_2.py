@@ -47,10 +47,11 @@ def play(seedIn,deck,desk):
         prevDeckLen=len(deck)
         while(not len(deck)==0):
             onfly=drawCards(deck,onfly)
+            delist=[]
             for i in onfly:
-                if(i==27):
+                if(roundCount==3):
                     pass
-                loc=-1
+                loc=None
                 coord=translateCard(i)
                 if(coord[1]==0):
                     loc=coord[0]%4
@@ -60,25 +61,22 @@ def play(seedIn,deck,desk):
                     loc=coord[0]%4
                 elif(len(desk[4+coord[0]%4])>0 and i==desk[4+coord[0]%4][-1]-1):
                     loc=4+coord[0]%4
-                if(not loc==-1):
+                if(not loc==None):
                     desk[loc].append(i)
-                    onfly.remove(i)
+                    if(roundCount==2):
+                        print('D----',loc,i)
+                    # onfly.remove(i)
+                    delist.append(i)
+                    print(i)
                 else:
                     break
-            if(onfly[-1]==-1):
+            for i in delist:
+                onfly.remove(i)
+            if(len(onfly)==0):
                 break
         print(desk)
+        # print(onfly[0],onfly[-3])
         deck.extend(onfly)
-# 01: 28
-# 02: 45
-# 03: 45
-# 04: 45
-# 05: 45
-# 06: 8
-# 07: 6
-# 08: 33
-# 09: 33
-        # deck.reverse()
         onfly=[]
         if(prevDeckLen==len(deck)):
             break
@@ -87,9 +85,6 @@ def play(seedIn,deck,desk):
         print('Left:',len(deck))
     else:
         print('Win')
-    
-    # print(deck)
-    # print(desk)
 
 
 
@@ -118,4 +113,4 @@ def game(seedin=None):
 
 if __name__ == "__main__":
     # simulate(500,11)
-    game(0)
+    game(9)
