@@ -37,7 +37,7 @@ def play(seedIn,deck,desk):
     output=[]
 
     def lprint(string=''):
-        splits=string.split('\n')
+        splits=[i.rstrip() for i in string.split('\n')]
         output.extend(splits)
     def orderConversion(n):
         match n:
@@ -58,10 +58,12 @@ def play(seedIn,deck,desk):
     def printDesk(desk):
         line='    '
         for i in range(8):
-            line=line+'['*(len(desk[i])-1)+(card[desk[i][-1]] if len(desk[i]) else '').ljust(15)
-
+            line=line+('['*(len(desk[i])-1)+(card(desk[i][-1]) if len(desk[i]) else '')).ljust(15)
+            if(i==3):
+                line=line+'\n    '
+        lprint(line)
         lprint()
-        pass
+        
              
     deck.sort()
     seed(seedIn)
@@ -71,34 +73,41 @@ def play(seedIn,deck,desk):
     roundCount=0
     
     lprint('Deck shuffled, ready to start!')
-    lprint(']'*len(deck))
+    # lprint(']'*len(deck))
+    printPiles(deck,onfly)
     
     while(not len(deck)==prevDeckLen):
         roundCount=roundCount+1
-        lprint(f'\nStarting to draw 3 cards (if possible) again and again for the {orderConversion(roundCount)} time...')
+        lprint(f'Starting to draw 3 cards (if possible) again and again for the {orderConversion(roundCount)} time...\n')
         prevDeckLen=len(deck)
         while(not len(deck)==0):
             onfly=drawCards(deck,onfly)
             printPiles(deck,onfly)
-            delist=[]
+            printDesk(desk)
+            # delist=[]
             onflyCopy=onfly[::1]
             for i in onflyCopy:
                 loc=None
                 coord=translateCard(i)
                 if(coord[1]==0):
                     loc=coord[0]%4
+                    lprint('Placing one of the base cards!')
                 elif(coord[1]==12):
                     loc=4+coord[0]%4
+                    lprint('Placing one of the base cards!')
                 elif(len(desk[coord[0]%4])>0 and i==desk[coord[0]%4][-1]+1):
                     loc=coord[0]%4
+                    lprint('Making progress on an increasing sequence!')
                 elif(len(desk[4+coord[0]%4])>0 and i==desk[4+coord[0]%4][-1]-1):
                     loc=4+coord[0]%4
+                    lprint('Making progress on a decreasing sequence!')
                 if(not loc==None):
                     desk[loc].append(i)
                     # delist.append(i)
                     onfly.remove(i)
-                    lprint('Placing one of the base cards!')
+                    
                     printPiles(deck,onfly)
+                    printDesk(desk)
                     # print(i)
                 else:
                     break
@@ -129,13 +138,44 @@ def game(seedin=None):
     collection=[]
     result=False
     result,collection=play(seedIn,deck,desk)
-
+    del collection[-1]
     if(result):
         print('\nAll cards have been placed, you won!')
     else:
         print(f'\n{len(deck)} cards could not be placed, you lost!')
-    # print(result,len(deck))
+
+    print(f'\nThere are {len(collection)} lines of output; what do you want me to do?')
+    while True:
+        option=input(f'\nEnter: q to quit\n       a last line number (between 1 and {len(collection)})\n       a first line number (between -1 and -{len(collection)})\n       a range of line numbers (of the form m--n with 1 <= m <= n <= {len(collection)})\n       ')
+        if(option=='q'):return
+        try:
+            option=[i.strip() for i in option.split('--')]
+            # if()
+            for i in option:
+                if not (47<ord(i[0])<58):
+                    raise Exception
+            option=[int(i) for i in option]
+                
+        except:
+            continue
+        if(len(option)==2 and (1<=option[0]<=option[1]<=len(collection))):
+            print()
+            for i in collection[option[0]-1:option[1]]:
+                print(i)
+        elif(len(option)==1):
+            if(1<=option[0]<=len(collection)):
+                print()
+                for i in collection[:option[0]]:
+                    print(i)
+            elif(-1>=option[0]>=-len(collection)):
+                print()
+                for i in collection[option[0]:]:
+                    print(i)
+            else:
+                return
+            
+
 
 if __name__ == "__main__":
     # simulate(500,11)
-    game(0)
+    game()
