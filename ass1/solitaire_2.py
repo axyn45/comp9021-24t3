@@ -25,7 +25,7 @@ def translateCard(n):
     return (n//13,n%13)
 
         
-def play(seedIn,deck,desk):
+def play(seedIn,deck,desk,mute=False):
 
     def drawCards(deck,hand):
         if(len(deck)==0):return hand
@@ -37,6 +37,8 @@ def play(seedIn,deck,desk):
     output=[]
 
     def lprint(string=''):
+        if(mute):
+            return
         splits=[i.rstrip() for i in string.split('\n')]
         output.extend(splits)
     def orderConversion(n):
@@ -78,6 +80,7 @@ def play(seedIn,deck,desk):
     
     while(not len(deck)==prevDeckLen):
         roundCount=roundCount+1
+        if(len(deck)+len(onfly)==0):break
         lprint(f'Starting to draw 3 cards (if possible) again and again for the {orderConversion(roundCount)} time...\n')
         prevDeckLen=len(deck)
         while(not len(deck)==0):
@@ -114,8 +117,8 @@ def play(seedIn,deck,desk):
             # for i in delist[::-1]:
             #     onfly.remove(i)
                 
-            if(len(onfly)==0):
-                break
+            # if(len(onfly)==0):
+            #     break
         # print(desk)
         deck.extend(onfly)
         onfly=[]
@@ -128,7 +131,7 @@ def play(seedIn,deck,desk):
         result=True
     return result,output
 
-def game(seedin=None):
+def game(seedin=None,mute=False):
     if(seedin is None):
         seedIn=input('Please enter an integer to feed the seed() function: ')
     else: seedIn=seedin
@@ -138,6 +141,8 @@ def game(seedin=None):
     collection=[]
     result=False
     result,collection=play(seedIn,deck,desk)
+    if(mute):
+        return len(deck)
     del collection[-1]
     if(result):
         print('\nAll cards have been placed, you won!')
@@ -152,7 +157,7 @@ def game(seedin=None):
             option=[i.strip() for i in option.split('--')]
             # if()
             for i in option:
-                if not (47<ord(i[0])<58):
+                if not (47<ord(i[0])<58 or ord(i[0])==45):
                     raise Exception
             option=[int(i) for i in option]
                 
@@ -174,6 +179,20 @@ def game(seedin=None):
             else:
                 return
             
+
+def simulate(n,i):
+    # print(n,i)
+    lut={}
+    for j in range(n):
+        result=game(i+j,True)
+        # print(j,result,'-----------------------------------------------------------')
+        lut[result]=1 if(result not in lut) else lut[result]+1
+    print('Number of cards left | Frequency\n--------------------------------')
+    # lut=sorted(lut)
+    # print(lut)
+
+    for k in sorted(lut)[::-1]:
+        print(str(k).rjust(20),'|',f'{lut[k]/n*100:,.2f}%'.rjust(9))
 
 
 if __name__ == "__main__":
