@@ -84,5 +84,91 @@ from collections import defaultdict
 
 
 def analyse(gender, age):
-    pass
+    # MACROS
+    ID=0
+    AGE=1
+    GENDER=2
+    HEIGHT=3
+    WEIGHT=4
+    APHI=5
+    APLO=6
+    CHOLESTEROL=7
+    GLUC=8
+    SMOKE=9
+    ALCO=10
+    ACTIVE=11
+    CARDIO=12
+    def checkAge(age,days):
+        if((days-1)//365==age):return True
+        else:
+            return False
+    def checkGender(ref,value):
+        if(ref=='F' and value==1):
+            return True
+        elif(ref=='M' and value==2):
+            return True
+        else: return False
+    def checkHeight(height):
+        if(height<150 or height>200):return False
+        else: return True
+    def checkWeight(weight):
+        if(weight<50 or weight>150):return False
+        else: return True
+    def checkAPHI(aphi):
+        if(aphi<80 or aphi>200):return False
+        else: return True
+    def checkAPLO(aplo):
+        if(aplo<70 or aplo>140):return False
+        else: return True
+    def aggregate(feature,shape):
+        interval=[0,0]
+        if(shape[0]==5):
+            interval[0]=cardioBoundries[feature][1]-cardioBoundries[feature][0]/5.0
+            interval[1]=noncardioBoundries[feature][1]-noncardioBoundries[feature][0]/5.0
+        if(shape[0]<=3):
+            interval[0]=interval[1]=1
+
+        pass
+
+    lut={HEIGHT:(5,'Height'),WEIGHT:(5,'Weight'),APHI:(5,'Systolic blood pressure'),APLO:(5,'Diastolic blood pressure'),CHOLESTEROL:(3,'Cholesterol'),GLUC:(3,'Glucose'),SMOKE:(2,'Smoking','Not smoking'),ALCO:(2,'Dringking','Not drinking'),ACTIVE:(2,'Being active','Not being active')}
+    cardioBoundries={HEIGHT:[199,150],WEIGHT:[149,50],APHI:[199,80],APLO:[139,70]}
+    noncardioBoundries={HEIGHT:[199,150],WEIGHT:[149,50],APHI:[199,80],APLO:[139,70]}
+    filename='quiz5/cardio_train.csv'
+    fields=[]
+    cardio=[]
+    noncardio=[]
+    result={}
+    with open(filename,'r') as csvfile:
+        csvreader=csv.reader(csvfile,delimiter=';')
+        fields=next(csvreader)
+        for row in csvreader:
+            for i in range(len(row)):
+                if(i==4):row[i]=float(row[i])
+                else:row[i]=int(row[i])
+            # if(checkAge(age,row[AGE])):
+            #     print()
+            if(checkAge(age,row[AGE]) and checkGender(gender,row[GENDER]) and checkHeight(row[HEIGHT]) and checkWeight(row[WEIGHT]) and checkAPHI(row[APHI]) and checkAPLO(row[APLO])):
+                if(row[CARDIO]==1):boundries=cardioBoundries
+                else:boundries=noncardioBoundries
+                if(row[WEIGHT]<boundries[WEIGHT][0]):boundries[WEIGHT][0]=row[WEIGHT]
+                if(row[WEIGHT]>boundries[WEIGHT][1]):boundries[WEIGHT][1]=row[WEIGHT]
+                if(row[HEIGHT]<boundries[HEIGHT][0]):boundries[HEIGHT][0]=row[HEIGHT]
+                if(row[HEIGHT]>boundries[HEIGHT][1]):boundries[HEIGHT][1]=row[HEIGHT]
+                if(row[APHI]<boundries[APHI][0]):boundries[APHI][0]=row[APHI]
+                if(row[APHI]>boundries[APHI][1]):boundries[APHI][1]=row[APHI]
+                if(row[APLO]<boundries[APLO][0]):boundries[APLO][0]=row[APLO]
+                if(row[APLO]>boundries[APLO][1]):boundries[APLO][1]=row[APLO]
+                if(row[CARDIO]==1):cardio.append(row)
+                else:noncardio.append(row)
+            
+
+    print(fields)
+    print(len(cardio), len(noncardio))
+    print(cardioBoundries)
+    print(noncardioBoundries)
+
+
+
+    # pass
     # REPLACE PASS ABOVE WITH YOUR CODE
+analyse('F',43)
