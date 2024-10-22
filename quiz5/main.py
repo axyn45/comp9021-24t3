@@ -131,26 +131,26 @@ def analyse(gender, age):
     def getRatio(feature,clb,cub,nlb,nub):
         rCardio=countFeatured(cardio,feature,clb,cub)/float(len(cardio))
         rNoncardio=countFeatured(noncardio,feature,nlb,nub)/float(len(noncardio))
+        if(rNoncardio==0):return float('inf')
         return rCardio/rNoncardio
     
     def aggregate(feature,shape):
         gap=[0,0]
         if(shape[0]==5):
-            gap[0]=(cardioBoundries[feature][1]-cardioBoundries[feature][0])/5
-            gap[1]=(noncardioBoundries[feature][1]-noncardioBoundries[feature][0])/5
+            gap[0]=(cardioBoundries[feature][1]-cardioBoundries[feature][0])/5.0
+            gap[1]=(noncardioBoundries[feature][1]-noncardioBoundries[feature][0])/5.0
         if(shape[0]<=3):
             gap[0]=gap[1]=1
-        # record=[]
+
         cLb=cardioBoundries[feature][0]
         nLb=noncardioBoundries[feature][0]
         for i in range(shape[0]):
             ratio=getRatio(feature,i*gap[0]+cLb,(i+1)*gap[0]+cLb,i*gap[1]+nLb,(i+1)*gap[1]+nLb)
-            # result[(feature,i)]=ratio
             result.append((feature,i,ratio))
-
+        # for i in 
             # pass
 
-    lut={HEIGHT:(5,'Height'),WEIGHT:(5,'Weight'),APHI:(5,'Systolic blood pressure'),APLO:(5,'Diastolic blood pressure'),CHOLESTEROL:(3,'Cholesterol'),GLUC:(3,'Glucose'),SMOKE:(2,'Smoking','Not smoking'),ALCO:(2,'Dringking','Not drinking'),ACTIVE:(2,'Being active','Not being active')}
+    lut={HEIGHT:(5,'Height'),WEIGHT:(5,'Weight'),APHI:(5,'Systolic blood pressure'),APLO:(5,'Diastolic blood pressure'),CHOLESTEROL:(3,'Cholesterol'),GLUC:(3,'Glucose'),SMOKE:(2,'Not smoking','Smoking'),ALCO:(2,'Not drinking','Drinking'),ACTIVE:(2,'Being active','Not being active')}
     cardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[3,1],GLUC:[3,1],SMOKE:[1,0],ALCO:[1,0],ACTIVE:[1,0]}
     noncardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[3,1],GLUC:[3,1],SMOKE:[1,0],ALCO:[1,0],ACTIVE:[1,0]}
     filename='quiz5/cardio_train.csv'
@@ -161,10 +161,10 @@ def analyse(gender, age):
     with open(filename,'r') as csvfile:
         csvreader=csv.reader(csvfile,delimiter=';')
         fields=next(csvreader)
-        ct=0
+        # ct=0
         for row in csvreader:
-            ct=ct+1
-            if(ct%15000==0):print(ct)
+            # ct=ct+1
+            # if(ct%15000==0):print(ct)
             for i in range(len(row)):
                 if(i==4):row[i]=float(row[i])
                 else:row[i]=int(row[i])
@@ -195,6 +195,7 @@ def analyse(gender, age):
                 if(row[CARDIO]==1):cardio.append(row)
                 else:noncardio.append(row)
     for k,v in cardioBoundries.items():
+        if(lut[k][0]==2):pass
         cardioBoundries[k][1]=cardioBoundries[k][1]+0.1
         noncardioBoundries[k][1]=noncardioBoundries[k][1]+0.1
 
@@ -202,7 +203,15 @@ def analyse(gender, age):
         aggregate(k,v)
 
     result.sort(key=lambda x:x[2],reverse=True)
-    print(fields)
+    print(f"The following might particularly contribute to cardio problems for {'females' if gender=='F' else 'males'} aged {age}:")
+    for i in result:
+        if(i[2]<1):break
+        if(lut[i[0]][0]>2):
+            print(f"   {i[2]:,.2f}: {lut[i[0]][1]} in category {i[1]+1} (1 lowest, {lut[i[0]][0]} highest)")
+        else:
+            print(f"   {i[2]:,.2f}: {lut[i[0]][1] if i[1]==1 else lut[i[0]][2]}")
+
+
     # print(len(cardio), len(noncardio))
     # print(cardioBoundries)
     # print(noncardioBoundries)
@@ -211,4 +220,5 @@ def analyse(gender, age):
 
     # pass
     # REPLACE PASS ABOVE WITH YOUR CODE
-analyse('F',43)
+if __name__ == "__main__":
+    analyse('F',43)
