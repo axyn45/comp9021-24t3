@@ -120,28 +120,51 @@ def analyse(gender, age):
     def checkAPLO(aplo):
         if(aplo<70 or aplo>140):return False
         else: return True
+    def xor(a,b):
+        return bool(a)!=bool(b)
+    def countFeatured(data,feature,lb,ub):
+        ct=0
+        for r in data:
+            if(lb<=r[feature]<ub):
+                ct=ct+1
+        return ct
+    def getRatio(feature,clb,cub,nlb,nub):
+        rCardio=countFeatured(cardio,feature,clb,cub)/float(len(cardio))
+        rNoncardio=countFeatured(noncardio,feature,nlb,nub)/float(len(noncardio))
+        return rCardio/rNoncardio
+    
     def aggregate(feature,shape):
-        interval=[0,0]
+        gap=[0,0]
         if(shape[0]==5):
-            interval[0]=cardioBoundries[feature][1]-cardioBoundries[feature][0]/5.0
-            interval[1]=noncardioBoundries[feature][1]-noncardioBoundries[feature][0]/5.0
+            gap[0]=(cardioBoundries[feature][1]-cardioBoundries[feature][0])/5
+            gap[1]=(noncardioBoundries[feature][1]-noncardioBoundries[feature][0])/5
         if(shape[0]<=3):
-            interval[0]=interval[1]=1
+            gap[0]=gap[1]=1
+        # record=[]
+        cLb=cardioBoundries[feature][0]
+        nLb=noncardioBoundries[feature][0]
+        for i in range(shape[0]):
+            ratio=getRatio(feature,i*gap[0]+cLb,(i+1)*gap[0]+cLb,i*gap[1]+nLb,(i+1)*gap[1]+nLb)
+            # result[(feature,i)]=ratio
+            result.append((feature,i,ratio))
 
-        pass
+            # pass
 
     lut={HEIGHT:(5,'Height'),WEIGHT:(5,'Weight'),APHI:(5,'Systolic blood pressure'),APLO:(5,'Diastolic blood pressure'),CHOLESTEROL:(3,'Cholesterol'),GLUC:(3,'Glucose'),SMOKE:(2,'Smoking','Not smoking'),ALCO:(2,'Dringking','Not drinking'),ACTIVE:(2,'Being active','Not being active')}
-    cardioBoundries={HEIGHT:[199,150],WEIGHT:[149,50],APHI:[199,80],APLO:[139,70]}
-    noncardioBoundries={HEIGHT:[199,150],WEIGHT:[149,50],APHI:[199,80],APLO:[139,70]}
+    cardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[3,1],GLUC:[3,1],SMOKE:[1,0],ALCO:[1,0],ACTIVE:[1,0]}
+    noncardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[3,1],GLUC:[3,1],SMOKE:[1,0],ALCO:[1,0],ACTIVE:[1,0]}
     filename='quiz5/cardio_train.csv'
     fields=[]
     cardio=[]
     noncardio=[]
-    result={}
+    result=[]
     with open(filename,'r') as csvfile:
         csvreader=csv.reader(csvfile,delimiter=';')
         fields=next(csvreader)
+        ct=0
         for row in csvreader:
+            ct=ct+1
+            if(ct%15000==0):print(ct)
             for i in range(len(row)):
                 if(i==4):row[i]=float(row[i])
                 else:row[i]=int(row[i])
@@ -158,14 +181,31 @@ def analyse(gender, age):
                 if(row[APHI]>boundries[APHI][1]):boundries[APHI][1]=row[APHI]
                 if(row[APLO]<boundries[APLO][0]):boundries[APLO][0]=row[APLO]
                 if(row[APLO]>boundries[APLO][1]):boundries[APLO][1]=row[APLO]
+
+                if(row[CHOLESTEROL]<boundries[CHOLESTEROL][0]):boundries[CHOLESTEROL][0]=row[CHOLESTEROL]
+                if(row[CHOLESTEROL]>boundries[CHOLESTEROL][1]):boundries[CHOLESTEROL][1]=row[CHOLESTEROL]
+                if(row[GLUC]<boundries[GLUC][0]):boundries[GLUC][0]=row[GLUC]
+                if(row[GLUC]>boundries[GLUC][1]):boundries[GLUC][1]=row[GLUC]
+                if(row[SMOKE]<boundries[SMOKE][0]):boundries[SMOKE][0]=row[SMOKE]
+                if(row[SMOKE]>boundries[SMOKE][1]):boundries[SMOKE][1]=row[SMOKE]
+                if(row[ALCO]<boundries[ALCO][0]):boundries[ALCO][0]=row[ALCO]
+                if(row[ALCO]>boundries[ALCO][1]):boundries[ALCO][1]=row[ALCO]
+                if(row[ACTIVE]<boundries[ACTIVE][0]):boundries[ACTIVE][0]=row[ACTIVE]
+                if(row[ACTIVE]>boundries[ACTIVE][1]):boundries[ACTIVE][1]=row[ACTIVE]
                 if(row[CARDIO]==1):cardio.append(row)
                 else:noncardio.append(row)
-            
+    for k,v in cardioBoundries.items():
+        cardioBoundries[k][1]=cardioBoundries[k][1]+0.1
+        noncardioBoundries[k][1]=noncardioBoundries[k][1]+0.1
 
+    for k,v in lut.items():
+        aggregate(k,v)
+
+    result.sort(key=lambda x:x[2],reverse=True)
     print(fields)
-    print(len(cardio), len(noncardio))
-    print(cardioBoundries)
-    print(noncardioBoundries)
+    # print(len(cardio), len(noncardio))
+    # print(cardioBoundries)
+    # print(noncardioBoundries)
 
 
 
