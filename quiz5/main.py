@@ -151,8 +151,8 @@ def analyse(gender, age):
             # pass
 
     lut={HEIGHT:(5,'Height'),WEIGHT:(5,'Weight'),APHI:(5,'Systolic blood pressure'),APLO:(5,'Diastolic blood pressure'),CHOLESTEROL:(3,'Cholesterol'),GLUC:(3,'Glucose'),SMOKE:(2,'Not smoking','Smoking'),ALCO:(2,'Not drinking','Drinking'),ACTIVE:(2,'Being active','Not being active')}
-    cardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[3,1],GLUC:[3,1],SMOKE:[1,0],ALCO:[1,0],ACTIVE:[1,0]}
-    noncardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[3,1],GLUC:[3,1],SMOKE:[1,0],ALCO:[1,0],ACTIVE:[1,0]}
+    cardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[1,3],GLUC:[1,3],SMOKE:[0,1],ALCO:[0,1],ACTIVE:[0,1]}
+    noncardioBoundries={HEIGHT:[200,150],WEIGHT:[150,50],APHI:[200,80],APLO:[140,70],CHOLESTEROL:[1,3],GLUC:[1,3],SMOKE:[0,1],ALCO:[0,1],ACTIVE:[0,1]}
     filename='quiz5/cardio_train.csv'
     fields=[]
     cardio=[]
@@ -182,16 +182,16 @@ def analyse(gender, age):
                 if(row[APLO]<boundries[APLO][0]):boundries[APLO][0]=row[APLO]
                 if(row[APLO]>boundries[APLO][1]):boundries[APLO][1]=row[APLO]
 
-                if(row[CHOLESTEROL]<boundries[CHOLESTEROL][0]):boundries[CHOLESTEROL][0]=row[CHOLESTEROL]
-                if(row[CHOLESTEROL]>boundries[CHOLESTEROL][1]):boundries[CHOLESTEROL][1]=row[CHOLESTEROL]
-                if(row[GLUC]<boundries[GLUC][0]):boundries[GLUC][0]=row[GLUC]
-                if(row[GLUC]>boundries[GLUC][1]):boundries[GLUC][1]=row[GLUC]
-                if(row[SMOKE]<boundries[SMOKE][0]):boundries[SMOKE][0]=row[SMOKE]
-                if(row[SMOKE]>boundries[SMOKE][1]):boundries[SMOKE][1]=row[SMOKE]
-                if(row[ALCO]<boundries[ALCO][0]):boundries[ALCO][0]=row[ALCO]
-                if(row[ALCO]>boundries[ALCO][1]):boundries[ALCO][1]=row[ALCO]
-                if(row[ACTIVE]<boundries[ACTIVE][0]):boundries[ACTIVE][0]=row[ACTIVE]
-                if(row[ACTIVE]>boundries[ACTIVE][1]):boundries[ACTIVE][1]=row[ACTIVE]
+                # if(row[CHOLESTEROL]<boundries[CHOLESTEROL][0]):boundries[CHOLESTEROL][0]=row[CHOLESTEROL]
+                # if(row[CHOLESTEROL]>boundries[CHOLESTEROL][1]):boundries[CHOLESTEROL][1]=row[CHOLESTEROL]
+                # if(row[GLUC]<boundries[GLUC][0]):boundries[GLUC][0]=row[GLUC]
+                # if(row[GLUC]>boundries[GLUC][1]):boundries[GLUC][1]=row[GLUC]
+                # if(row[SMOKE]<boundries[SMOKE][0]):boundries[SMOKE][0]=row[SMOKE]
+                # if(row[SMOKE]>boundries[SMOKE][1]):boundries[SMOKE][1]=row[SMOKE]
+                # if(row[ALCO]<boundries[ALCO][0]):boundries[ALCO][0]=row[ALCO]
+                # if(row[ALCO]>boundries[ALCO][1]):boundries[ALCO][1]=row[ALCO]
+                # if(row[ACTIVE]<boundries[ACTIVE][0]):boundries[ACTIVE][0]=row[ACTIVE]
+                # if(row[ACTIVE]>boundries[ACTIVE][1]):boundries[ACTIVE][1]=row[ACTIVE]
                 if(row[CARDIO]==1):cardio.append(row)
                 else:noncardio.append(row)
     for k,v in cardioBoundries.items():
@@ -221,4 +221,4 @@ def analyse(gender, age):
     # pass
     # REPLACE PASS ABOVE WITH YOUR CODE
 if __name__ == "__main__":
-    analyse('F',43)
+    analyse('F',29)
