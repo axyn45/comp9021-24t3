@@ -1,0 +1,34 @@
+\documentclass{standalone}
+\usepackage{pas-crosswords}
+\usepackage{tikz}
+
+\begin{document}
+\begin{tikzpicture}
+\begin{crossgrid}[%
+h=9,					% Horizontal
+v=9 					% and vertical
+                 ]	 		% dimensions
+                 
+\blackcases{5/1, 5/2, 4/4, 1/5, 2/5, 8/5, 9/5, 6/6, 5/8, 5/9}.   %No letter goes there!
+
+\words[v]{1/6/SASS ,  %
+          6/7/GPS ,  %        
+          9/1/H ,  % One letter only.
+          4/1/OMG  % So abbreviations are fine! 
+}
+
+\words[h]{1/ 3/WINGWOMAN ,  % But what's that?
+          1/7/ALPENGLOW ,  % Must look very nice...
+          5/4/OZARK ,  % And that?
+          7/6/IMO,   % An abbreviation again!
+          1/1/PESO ,  % Why isn't that in the dictionary?
+          1/9/SARA ,  %
+          6/5/ED ,  %
+          1/4/STD ,  %
+          6/2/OREO ,  %
+          4/5/A 
+}
+
+\end{crossgrid}
+\end{tikzpicture}
+\end{document}
