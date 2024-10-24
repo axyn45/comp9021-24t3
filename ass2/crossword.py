@@ -104,11 +104,41 @@ class Crossword:
     #                     ctH+=1
     #                 notcomplete=False
     #     return ctV,ctH
+    def filterPrefix(prefix,words):
+        result=[]
+        for w in words:
+            if(w.startswith(prefix)):
+                result.append(w)
+        return result
+    
+    def splitArray(self,data):
+        # result=[]
+        self.hspaces=[]
+        startpos=0
+        for i in range(data.size+1):
+            if(i==data.size or data[i]=='*' and not startpos==i):
+                self.hspaces.append(data[startpos:i])
+                startpos=i+1
+        # return result
+    
+    def fill_with_given_words(self,wordsfile,texfile):
+        self.givenwords=[]
+        with open(wordsfile,'r') as wf:
+            for l in wf:
+                if(l.strip()): self.givenwords.append(l.strip())
+
+        startpos=0
+        # for i in range(self.height):
+        self.splitArray(self.grid[0])
+        self.hspaces[0][:]=list('abcd')
+        print(self.hspaces)
+        print(self.grid)
 
 
 
 
 if __name__=='__main__':
-    a=Crossword('ass2/partial_grid_1.tex')
+    a=Crossword('ass2/empty_grid_3.tex')
     print(a)
-    print(a.countCompleted())
+    a.fill_with_given_words('ass2/words_1.txt','test.tex')
+    # print(a.splitArray)
