@@ -113,14 +113,31 @@ class Crossword:
     
     def splitArray(self,data):
         # result=[]
-        self.hspaces=[]
+        self.hslots=[]
         startpos=0
         for i in range(data.size+1):
             if(i==data.size or data[i]=='*' and not startpos==i):
-                self.hspaces.append(data[startpos:i])
+                self.hslots.append(data[startpos:i])
                 startpos=i+1
         # return result
     
+    def clearGrid(self):
+        for i in range(self.height):
+            for j in range(self.width):
+                if(not (self.grid[i,j]=='' or self.grid[i,j]=='*')):
+                    self.grid[i,j]=''
+                    
+    def initWordsByLen(self,length):
+        if(self.wordsbylen is None):
+            self.wordsbylen={}
+        if(length in self.wordsbylen):
+            return
+        self.wordsbylen[length]=[]
+        for word in self.givenwords:
+            if(len(word)==length):
+                self.wordsbylen[length].append(word)
+
+
     def fill_with_given_words(self,wordsfile,texfile):
         self.givenwords=[]
         with open(wordsfile,'r') as wf:
@@ -128,10 +145,22 @@ class Crossword:
                 if(l.strip()): self.givenwords.append(l.strip())
 
         startpos=0
-        # for i in range(self.height):
-        self.splitArray(self.grid[0])
-        self.hspaces[0][:]=list('abcd')
-        print(self.hspaces)
+        for i in range(self.height):
+            self.splitArray(self.grid[i])
+            # self.hspaces[0][:]=list('abcd')
+            pass
+            for slot in self.hslots:
+                self.initWordsByLen(slot.size)
+                if(len(self.wordsbylen[slot.size])==0):
+                    return      # GAME CANT BE COMPLETED
+                
+
+                # print(slot.size)
+                # slot[:]=list('x'*slot.size)
+
+        # print(self.hspaces)
+        # print(self.grid)
+        # self.clearGrid()
         print(self.grid)
 
 
