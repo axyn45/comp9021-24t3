@@ -114,11 +114,21 @@ class Crossword:
     def splitArray(self,data):
         # result=[]
         self.hslots=[]
-        startpos=0
-        for i in range(data.size+1):
-            if(i==data.size or data[i]=='*' and not startpos==i):
-                self.hslots.append(data[startpos:i])
-                startpos=i+1
+        self.vslots=[]
+        for i in range(self.height):
+            startpos=0
+            for j in range(self.grid[i].size):
+                if(self.grid[i,j]=='*'):
+                    if(not startpos==j):
+                        self.hslots.append(self.grid[i,startpos:j])
+                    startpos=i+1
+        for i in range(self.width):
+            startpos=0
+            for j in range(self.grid[:,i].size):
+                if(self.grid[j,i]=='*'):
+                    if(not startpos==j):
+                        self.vslots.append(self.grid[startpos:j,i])
+                    startpos=i+1
         # return result
     
     def clearGrid(self):
