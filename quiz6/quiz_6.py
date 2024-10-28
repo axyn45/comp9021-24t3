@@ -72,7 +72,58 @@ def display(grid):
     print('  ', '-' * (2 * dim + 3))
 
 def stripes(width):
-    return 0, 0, grid
+    global grid
+    result={}
+    maxlen=0
+    # countmax=0
+    def checkDiagno(i,j):
+        length=0
+        for idx1 in range(len(grid[i])-j):
+            for idx2 in range(width):
+                if(i+idx1+idx2>=len(grid) or not grid[i+idx1+idx2][j+idx1-idx2]=='*'):
+                    if(length>1):
+                        result[(i,j)]=length
+                        # maxlen=length if length>maxlen else maxlen
+                    return length
+            length+=1
+        result[(i,j)]=length
+        return length
+
+    
+    def isRepeated(i,j):
+        for k,v in result.items():
+            if(j-i==k[1]-k[0]):
+                return True
+        return False
+    
+    def maxStrips(maxlen):
+        # global grid
+        countmax=0
+        gridmax=[[' ' for _ in range(dim)] for _ in range(dim)]
+        # gridmax=[]
+        for k,v in result.items():
+            if(v==maxlen):
+                countmax+=1
+                for i in range(k[0],k[0]+width+v-1):
+                    for j in range(k[1]-width+1,k[1]+v):
+                        if((k[0]+k[1])%2==(i+j)%2 and k[0]-k[1]+2*width-2>=i-j>=k[0]-k[1] and k[0]+k[1]+2*v-2>=i+j>=k[0]+k[1]):
+                            gridmax[i][j]='*'
+        return gridmax,countmax
+                
+
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            if(not grid[i][j]=='*' or j<width-1 or i>=len(grid[i])-1 or i+width>len(grid)-1):
+                continue
+            if(not isRepeated(i,j)):
+                length=checkDiagno(i,j)
+                if(length>maxlen):maxlen=length
+    # print(result)
+
+
+
+    gridmax,countmax=maxStrips(maxlen)
+    return countmax, maxlen*width, gridmax
     # REPLACE THE RETURN STATEMENT ABOVE WITH YOUR CODE
     
 # POSSIBLY DEFINE OTHER FUNCTIONS
