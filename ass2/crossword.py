@@ -7,9 +7,10 @@ class Crossword:
         # print(filename)
         self.rawtex=[]
         self.tex=''
-        self.blackcases=[]
-        self.vwords=[]
-        self.hwords=[]
+        self.blackcount=0
+        self.lettercount=0
+        vwords=[]
+        hwords=[]
         self.letterscount=0
 
         with open('ass2/dictionary.txt','r') as d:
@@ -25,6 +26,12 @@ class Crossword:
             matches=matches[0].split(',')
             self.width=int(matches[0].split('=')[1])
             self.height=int(matches[1].split('=')[1])
+        else:
+            matches=re.findall(r'(?<=\\gridcross\{)[A-Z,\*]*(?=})',self.tex)
+            mstr=matches[0].split(',')
+            self.width=len(mstr[0])
+            self.height=len(mstr)
+
 
         matches=re.findall(r'(?<=\\blackcases{)[\d\/,]*(?=})',self.tex)
         if(len(matches)):
@@ -47,17 +54,27 @@ class Crossword:
                 coord=i.split('/')
                 self.hwords.append((int(coord[1])-1,int(coord[0])-1,coord[2]))
 
-        for i in self.vwords+self.hwords:
+        for i in vwords+hwords:
             self.letterscount+=len(i[2])
 
         self.grid=np.array([['' for _ in range(self.width)] for _ in range(self.height)])
         
-        for i in self.blackcases:
-            self.grid[i[0],i[1]]='*'
-        for i in self.vwords:
-            self.grid[i[0]:i[0]+len(i[2]),i[1]]=list(i[2])
-        for i in self.hwords:
-            self.grid[i[0],i[1]:i[1]+len(i[2])]=list(i[2])
+        if(mstr):
+            for i in range(len(mstr)):
+                self.grid[i]=list(mstr[i])
+        else:
+            for i in blackcases:
+                self.grid[i[0],i[1]]='*'
+            for i in vwords:
+                self.grid[i[0]:i[0]+len(i[2]),i[1]]=list(i[2])
+            for i in hwords:
+                self.grid[i[0],i[1]:i[1]+len(i[2])]=list(i[2])
+        for i in self.grid:
+            for j in range(i.size):
+                if(i[j]=='*'):
+                    self.blackcount+=1
+                elif(not i[j]==''):
+                    self.lettercount+=1
     
     def __str__(self):
         ctV=0
@@ -80,7 +97,7 @@ class Crossword:
                     if(not notcomplete):
                         ctH+=1
                     notcomplete=False
-        return (f'A grid of width {self.width} and height {self.height}, with {len(self.blackcases) if len(self.blackcases) else "no"} blackcase{"" if len(self.blackcases)==1 else "s"}, filled with {self.letterscount if self.letterscount else "no"} letter{"" if self.letterscount==1 else "s"},\nwith {ctV if ctV else "no"} complete vertical word{"" if ctV==1 else "s"} and {ctH if ctH else "no"} complete horizontal word{"" if ctH==1 else "s"}.')
+        return (f'A grid of width {self.width} and height {self.height}, with {self.blackcount if self.blackcount else "no"} blackcase{"" if self.blackcount==1 else "s"}, filled with {self.lettercount if self.lettercount else "no"} letter{"" if self.lettercount==1 else "s"},\nwith {ctV if ctV else "no"} complete vertical word{"" if ctV==1 else "s"} and {ctH if ctH else "no"} complete horizontal word{"" if ctH==1 else "s"}.')
         
     # def countCompleted(self):
     #     ctV=0
@@ -111,24 +128,31 @@ class Crossword:
                 result.append(w)
         return result
     
-    def splitArray(self,data):
+    def splitSlots(self):
         # result=[]
         self.hslots=[]
         self.vslots=[]
         for i in range(self.height):
             startpos=0
-            for j in range(self.grid[i].size):
-                if(self.grid[i,j]=='*'):
+            for j in range(self.grid[i].size+1):
+                if(j==self.grid[i].size or self.grid[i,j]=='*'):
                     if(not startpos==j):
                         self.hslots.append(self.grid[i,startpos:j])
-                    startpos=i+1
+                    startpos=j+1
         for i in range(self.width):
             startpos=0
-            for j in range(self.grid[:,i].size):
-                if(self.grid[j,i]=='*'):
+            for j in range(self.grid.T[i].size+1):
+                if(j==self.grid.T[i].size or self.grid.T[i,j]=='*'):
                     if(not startpos==j):
-                        self.vslots.append(self.grid[startpos:j,i])
-                    startpos=i+1
+                        self.vslots.append(self.grid.T[i,startpos:j])
+                    startpos=j+1
+        # for i in range(self.width):
+        #     startpos=0
+        #     for j in range(self.grid[:,i].size):
+        #         if(self.grid[j,i]=='*'):
+        #             if(not startpos==j):
+        #                 self.vslots.append(self.grid[startpos:j,i])
+        #             startpos=i+1
         # return result
     
     def clearGrid(self):
@@ -137,32 +161,51 @@ class Crossword:
                 if(not (self.grid[i,j]=='' or self.grid[i,j]=='*')):
                     self.grid[i,j]=''
                     
-    def initWordsByLen(self,length):
-        if(self.wordsbylen is None):
+    def initWordsByLen(self):
+        if(not hasattr(self,'wordsbylen')):
             self.wordsbylen={}
-        if(length in self.wordsbylen):
-            return
-        self.wordsbylen[length]=[]
-        for word in self.givenwords:
-            if(len(word)==length):
-                self.wordsbylen[length].append(word)
-
+        validLengths=set([i.size for i in self.hslots]+[i.size for i in self.vslots])
+        for length in validLengths:
+            if(length in self.wordsbylen):
+                return
+            self.wordsbylen[length]=[]
+            for word in self.words:
+                if(len(word)==length):
+                    self.wordsbylen[length].append(word)
+    
+    def loadWords(self,filename):
+        if(not hasattr(self,'hslots') or not hasattr(self,'vslots')):
+            self.splitSlots()
+        words=[]
+        validLengths=set([i.size for i in self.hslots]+[i.size for i in self.vslots])
+        with open(filename,'r') as f:
+            for i in f:
+                i=i.strip()
+                if(len(i) in validLengths):
+                    words.append(i)
+        self.words=np.array(words)
+                    
 
     def fill_with_given_words(self,wordsfile,texfile):
-        self.givenwords=[]
-        with open(wordsfile,'r') as wf:
-            for l in wf:
-                if(l.strip()): self.givenwords.append(l.strip())
+        # self.words=[]
+        # with open(wordsfile,'r') as wf:
+        #     for l in wf:
+        #         if(l.strip()): self.words.append(l.strip())
 
-        startpos=0
-        for i in range(self.height):
-            self.splitArray(self.grid[i])
-            # self.hspaces[0][:]=list('abcd')
-            pass
-            for slot in self.hslots:
-                self.initWordsByLen(slot.size)
-                if(len(self.wordsbylen[slot.size])==0):
-                    return      # GAME CANT BE COMPLETED
+        # startpos=0
+        self.splitSlots()
+        self.loadWords(wordsfile)
+        self.initWordsByLen()
+
+        # for i in range(self.height):
+        #     # self.hspaces[0][:]=list('abcd')
+        #     pass
+        #     for slot in self.hslots:
+        #         self.initWordsByLen(slot.size)
+        #         if(len(self.wordsbylen[slot.size])==0):
+
+        return
+        # GAME CANT BE COMPLETED
                 
 
                 # print(slot.size)
@@ -177,7 +220,7 @@ class Crossword:
 
 
 if __name__=='__main__':
-    a=Crossword('ass2/empty_grid_3.tex')
+    a=Crossword('ass2/solved_partial_grid_3.tex')
     print(a)
-    a.fill_with_given_words('ass2/words_1.txt','test.tex')
+    a.fill_with_given_words('ass2/words_2.txt','test.tex')
     # print(a.splitArray)
