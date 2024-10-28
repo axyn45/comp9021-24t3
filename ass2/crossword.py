@@ -35,10 +35,11 @@ class Crossword:
 
         matches=re.findall(r'(?<=\\blackcases{)[\d\/,]*(?=})',self.tex)
         if(len(matches)):
+            blackcases=[]
             matches=matches[0].split(',')
             for i in matches:
                 coord=i.split('/')
-                self.blackcases.append((int(coord[1])-1,int(coord[0])-1))
+                blackcases.append((int(coord[1])-1,int(coord[0])-1))
         
         matches=re.findall(r'(?<=\\words\[v\]{)[\d\/,a-zA-Z]*(?=})',self.tex)
         if(len(matches)):
@@ -99,28 +100,6 @@ class Crossword:
                     notcomplete=False
         return (f'A grid of width {self.width} and height {self.height}, with {self.blackcount if self.blackcount else "no"} blackcase{"" if self.blackcount==1 else "s"}, filled with {self.lettercount if self.lettercount else "no"} letter{"" if self.lettercount==1 else "s"},\nwith {ctV if ctV else "no"} complete vertical word{"" if ctV==1 else "s"} and {ctH if ctH else "no"} complete horizontal word{"" if ctH==1 else "s"}.')
         
-    # def countCompleted(self):
-    #     ctV=0
-    #     ctH=0
-    #     for i in self.grid.T:
-    #         notcomplete=False
-    #         for j in range(len(i)):
-    #             if(i[j]=='' or ('*'==i[j] and (j==0 or i[j-1]==i[j]))):
-    #                 notcomplete=True
-    #             if(i[j]=='*' or j==len(i)-1):
-    #                 if(not notcomplete):
-    #                     ctV+=1
-    #                 notcomplete=False
-    #     for i in self.grid:
-    #         notcomplete=False
-    #         for j in range(len(i)):
-    #             if(i[j]=='' or ('*'==i[j] and (j==0 or i[j-1]==i[j]))):
-    #                 notcomplete=True
-    #             if(i[j]=='*' or j==len(i)-1):
-    #                 if(not notcomplete):
-    #                     ctH+=1
-    #                 notcomplete=False
-    #     return ctV,ctH
     def filterPrefix(prefix,words):
         result=[]
         for w in words:
@@ -130,30 +109,31 @@ class Crossword:
     
     def splitSlots(self):
         # result=[]
-        self.hslots=[]
+        self.hSlots=[]
+        self.vSlots=[]
+        self.sortedHSlots=[]
+        self.sortedVSlots=[]
+
         self.vslots=[]
         for i in range(self.height):
             startpos=0
             for j in range(self.grid[i].size+1):
                 if(j==self.grid[i].size or self.grid[i,j]=='*'):
-                    if(not startpos==j):
-                        self.hslots.append(self.grid[i,startpos:j])
+                    if(not startpos==j and j-startpos>1):
+                        self.hSlots.append(self.grid[i,startpos:j])
                     startpos=j+1
         for i in range(self.width):
             startpos=0
             for j in range(self.grid.T[i].size+1):
                 if(j==self.grid.T[i].size or self.grid.T[i,j]=='*'):
-                    if(not startpos==j):
-                        self.vslots.append(self.grid.T[i,startpos:j])
+                    if(not startpos==j and j-startpos>1):
+                        self.vSlots.append(self.grid.T[i,startpos:j])
                     startpos=j+1
-        # for i in range(self.width):
-        #     startpos=0
-        #     for j in range(self.grid[:,i].size):
-        #         if(self.grid[j,i]=='*'):
-        #             if(not startpos==j):
-        #                 self.vslots.append(self.grid[startpos:j,i])
-        #             startpos=i+1
-        # return result
+
+        self.sortedHSlots=sorted(self.hSlots,key=lambda x:x.size)
+        self.sortedVSlots=sorted(self.vSlots,key=lambda x:x.size)
+        # pass
+
     
     def clearGrid(self):
         for i in range(self.height):
@@ -184,6 +164,15 @@ class Crossword:
                 if(len(i) in validLengths):
                     words.append(i)
         self.words=np.array(words)
+
+    # def validatePattern(pattern):
+    
+    # def placeWords(self,hleft,vleft):
+    #     if(not hasattr(self,'steptracks')):
+    #         self.steptracks=[]  # e=(hv:int; pos:int; prevstate:string; newstate:string)
+    #     if()
+
+
                     
 
     def fill_with_given_words(self,wordsfile,texfile):
@@ -196,6 +185,7 @@ class Crossword:
         self.splitSlots()
         self.loadWords(wordsfile)
         self.initWordsByLen()
+        # self.steptracks=[]          # e=(hv:int; pos:int; prevstate:string; newstate:string)
 
         # for i in range(self.height):
         #     # self.hspaces[0][:]=list('abcd')
