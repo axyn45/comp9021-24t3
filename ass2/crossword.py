@@ -58,18 +58,23 @@ class Crossword:
         for i in vwords+hwords:
             self.letterscount+=len(i[2])
 
-        self.grid=np.array([['' for _ in range(self.width)] for _ in range(self.height)])
+        self.grid=np.array([[' ' for _ in range(self.width)] for _ in range(self.height)])
         
-        if(mstr):
+        if('mstr' in locals()):
             for i in range(len(mstr)):
                 self.grid[i]=list(mstr[i])
         else:
-            for i in blackcases:
-                self.grid[i[0],i[1]]='*'
-            for i in vwords:
-                self.grid[i[0]:i[0]+len(i[2]),i[1]]=list(i[2])
-            for i in hwords:
-                self.grid[i[0],i[1]:i[1]+len(i[2])]=list(i[2])
+            if('blackcases' in locals()):
+                for i in blackcases:
+                    self.grid[i[0],i[1]]='*'
+
+            if('vwords' in locals()): 
+                for i in vwords:
+                    self.grid[i[0]:i[0]+len(i[2]),i[1]]=list(i[2])
+
+            if('hwords' in locals()):
+                for i in hwords:
+                    self.grid[i[0],i[1]:i[1]+len(i[2])]=list(i[2])
         for i in self.grid:
             for j in range(i.size):
                 if(i[j]=='*'):
@@ -113,6 +118,7 @@ class Crossword:
         self.vSlots=[]
         self.sortedHSlots=[]
         self.sortedVSlots=[]
+        self.sortedSlots=[]
 
         self.vslots=[]
         for i in range(self.height):
@@ -132,19 +138,19 @@ class Crossword:
 
         self.sortedHSlots=sorted(self.hSlots,key=lambda x:x.size)
         self.sortedVSlots=sorted(self.vSlots,key=lambda x:x.size)
+        self.sortedSlots=sorted(self.sortedHSlots+self.sortedVSlots,key=lambda x:x.size)
         # pass
 
-    
     def clearGrid(self):
         for i in range(self.height):
             for j in range(self.width):
-                if(not (self.grid[i,j]=='' or self.grid[i,j]=='*')):
-                    self.grid[i,j]=''
+                if(not (self.grid[i,j]==' ' or self.grid[i,j]=='*')):
+                    self.grid[i,j]=' '
                     
     def initWordsByLen(self):
         if(not hasattr(self,'wordsbylen')):
             self.wordsbylen={}
-        validLengths=set([i.size for i in self.hslots]+[i.size for i in self.vslots])
+        validLengths=set([i.size for i in self.hSlots]+[i.size for i in self.vSlots])
         for length in validLengths:
             if(length in self.wordsbylen):
                 return
@@ -154,10 +160,10 @@ class Crossword:
                     self.wordsbylen[length].append(word)
     
     def loadWords(self,filename):
-        if(not hasattr(self,'hslots') or not hasattr(self,'vslots')):
+        if(not hasattr(self,'hSlots') or not hasattr(self,'vSlots')):
             self.splitSlots()
         words=[]
-        validLengths=set([i.size for i in self.hslots]+[i.size for i in self.vslots])
+        validLengths=set([i.size for i in self.hSlots]+[i.size for i in self.vSlots])
         with open(filename,'r') as f:
             for i in f:
                 i=i.strip()
@@ -166,11 +172,110 @@ class Crossword:
         self.words=np.array(words)
 
     # def validatePattern(pattern):
+    def validate(self):
+        if(not hasattr(self,'wordslongbylen')):
+            self.wordslongbylen={}
+            for k,v in self.wordsbylen.items():
+                self.wordslongbylen[k]=' '.join(v)
+        for slot in self.sortedSlots:
+            pattern=''
+            for i in slot:
+                if(i==' '):
+                    pattern+='\w'
+                else:
+                    pattern+=i
+            matches=re.findall(pattern,self.wordslongbylen[slot.size])
+            if(not matches):
+                return False
+        return True
+                
+
+    def isSolved(self):
+        for i in self.sortedSlots:
+            if(np.isin(' ',i)):
+                return False
+        return True
+
+    def slot2str(self,slot):
+        result=''
+        for i in slot:
+            result+=i
+        return result
     
-    # def placeWords(self,hleft,vleft):
-    #     if(not hasattr(self,'steptracks')):
-    #         self.steptracks=[]  # e=(hv:int; pos:int; prevstate:string; newstate:string)
-    #     if()
+    def fitNextWord(self,slotIdx,prevWord):
+        # if(not self.steptracks):
+        #     slotIdx=0
+        #     prevWord=None
+        # else:
+        #     slotIdx=len(self.steptracks)
+        #     prevWord=self.steptracks[-1][]
+        wordList=self.wordsbylen[self.sortedSlots[slotIdx].size]
+        if(not prevWord):
+            prevWordIdx=-1
+        else:
+            prevWordIdx=wordList.index(prevWord)
+        if(prevWordIdx==len(wordList)-1):
+            return False
+        # pattern=''
+        # for i in self.sortedSlots[slotIdx]:
+        #     if(i==' '):
+        #         pattern+='\w'
+        #     else:
+        #         pattern+=i
+        pattern=self.slot2str(self.sortedSlots[slotIdx]).replace(' ','\w')
+        for i in range(prevWordIdx+1,len(wordList)):
+            matches=re.findall(pattern,wordList[i])
+            if(matches):
+                temp=pattern.replace('\w',' ')
+                self.sortedSlots[slotIdx][:]=list(wordList[i])
+                if(not self.validate()):
+                    self.sortedSlots[slotIdx][:]=list(temp)
+                    continue
+                self.steptracks.append((slotIdx,pattern.replace('\w',' '),wordList[i]))
+                # self.sortedSlots[slotIdx][:]=list(wordList[i])
+                return True
+
+        return False
+
+    
+    def backtrack(self,idx,prevWord):
+        if(idx==len(self.sortedSlots)):
+            return True
+        # if(not self.steptracks):
+        #     if(len(self.wordsbylen[self.sortedSlots[0].size])==0):
+        #         return False
+        #     if(not self.fitNextWord()):
+        #         if(not len(self.steptracks)):
+        #             return False
+        #         self.sortedSlots[self.steptracks[-1]]
+        if(self.fitNextWord(idx,prevWord)):
+            return self.backtrack(idx+1,'')
+        return False
+        
+
+    def placeWords(self):
+        if(not hasattr(self,'steptracks')):
+            self.steptracks=[]  # e=(pos:int; prevstate:string; newstate:string)
+        if(self.isSolved()):
+            return True
+        slotIdx=0
+        prevWord=''
+        while(not self.backtrack(slotIdx,prevWord)):
+            if(not len(self.steptracks)):
+                return False
+            lastStep=self.steptracks[-1]
+            self.sortedSlots[lastStep[0]][:]=list(lastStep[1])
+            del self.steptracks[-1]
+            prevWord=lastStep[2].strip()
+            slotIdx=lastStep[0]
+
+            # slotIdx=self.steptracks[-1][0]
+            # prevWord=self.steptracks[-1][1]
+            # self.sortedSlots[self.steptracks[-1][0]][:]=list(prevWord)
+            # del self.steptracks[-1]
+            # prevWord=prevWord.strip()
+        return True
+
 
 
                     
@@ -193,7 +298,13 @@ class Crossword:
         #     for slot in self.hslots:
         #         self.initWordsByLen(slot.size)
         #         if(len(self.wordsbylen[slot.size])==0):
-
+        if(self.placeWords()):
+            print('Solved!')
+        else:
+            print('Failed')
+        
+        print(self.grid)
+        
         return
         # GAME CANT BE COMPLETED
                 
@@ -210,7 +321,7 @@ class Crossword:
 
 
 if __name__=='__main__':
-    a=Crossword('ass2/solved_partial_grid_3.tex')
+    a=Crossword('ass2/empty_grid_3.tex')
     print(a)
-    a.fill_with_given_words('ass2/words_2.txt','test.tex')
+    a.fill_with_given_words('ass2/words_3.txt','test.tex')
     # print(a.splitArray)
