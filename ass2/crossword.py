@@ -12,9 +12,10 @@ class Crossword:
         vwords=[]
         hwords=[]
         self.letterscount=0
+        self.debug=0
 
-        with open('ass2/dictionary.txt','r') as d:
-            self.dictionary=np.array(list(d))
+        # with open('ass2/dictionary.txt','r') as d:
+        #     self.dictionary=np.array(list(d))
 
         with open(filename,'r') as f:
             for l in f:
@@ -46,14 +47,14 @@ class Crossword:
             matches=matches[0].split(',')
             for i in matches:
                 coord=i.split('/')
-                self.vwords.append((int(coord[1])-1,int(coord[0])-1,coord[2]))
+                vwords.append((int(coord[1])-1,int(coord[0])-1,coord[2]))
 
         matches=re.findall(r'(?<=\\words\[h\]{)[\d\/,a-zA-Z]*(?=})',self.tex)
         if(len(matches)):
             matches=matches[0].split(',')
             for i in matches:
                 coord=i.split('/')
-                self.hwords.append((int(coord[1])-1,int(coord[0])-1,coord[2]))
+                hwords.append((int(coord[1])-1,int(coord[0])-1,coord[2]))
 
         for i in vwords+hwords:
             self.letterscount+=len(i[2])
@@ -81,29 +82,44 @@ class Crossword:
                     self.blackcount+=1
                 elif(not i[j]==''):
                     self.lettercount+=1
+        self.splitSlots()
     
     def __str__(self):
-        ctV=0
-        ctH=0
-        for i in self.grid.T:
-            notcomplete=False
-            for j in range(len(i)):
-                if(i[j]=='' or ('*'==i[j] and (j==0 or i[j-1]==i[j]))):
-                    notcomplete=True
-                if(i[j]=='*' or j==len(i)-1):
-                    if(not notcomplete):
-                        ctV+=1
-                    notcomplete=False
-        for i in self.grid:
-            notcomplete=False
-            for j in range(len(i)):
-                if(i[j]=='' or ('*'==i[j] and (j==0 or i[j-1]==i[j]))):
-                    notcomplete=True
-                if(i[j]=='*' or j==len(i)-1):
-                    if(not notcomplete):
-                        ctH+=1
-                    notcomplete=False
-        return (f'A grid of width {self.width} and height {self.height}, with {self.blackcount if self.blackcount else "no"} blackcase{"" if self.blackcount==1 else "s"}, filled with {self.lettercount if self.lettercount else "no"} letter{"" if self.lettercount==1 else "s"},\nwith {ctV if ctV else "no"} complete vertical word{"" if ctV==1 else "s"} and {ctH if ctH else "no"} complete horizontal word{"" if ctH==1 else "s"}.')
+        # ctV=0
+        # ctH=0
+        # for i in self.grid.T:
+        #     notcomplete=False
+        #     for j in range(len(i)):
+        #         if(i[j]==' ' or ('*'==i[j] and (j==0 or i[j-1]==i[j]))):
+        #             notcomplete=True
+        #         if(i[j]=='*' or j==len(i)-1):
+        #             if(not notcomplete):
+        #                 ctV+=1
+        #             notcomplete=False
+        # for i in self.grid:
+        #     notcomplete=False
+        #     for j in range(len(i)):
+        #         if(i[j]==' ' or ('*'==i[j] and (j==0 or i[j-1]==i[j]))):
+        #             notcomplete=True
+        #         if(i[j]=='*' or j==len(i)-1):
+        #             if(not notcomplete):
+        #                 ctH+=1
+        #             notcomplete=False
+        # print(self.grid)
+        countH=0
+        countV=0
+        letters=0
+        for i in self.hSlots:
+            temp=self.slot2str(i)
+            if(' ' not in temp):
+                countH+=1
+            letters+=len(temp.replace(' ',''))
+        for i in self.vSlots:
+            temp=self.slot2str(i)
+            if(' ' not in temp):
+                countV+=1
+            # letters+=len(temp.replace(' ',''))
+        return (f'A grid of width {self.width} and height {self.height}, with {self.blackcount if self.blackcount else "no"} blackcase{"" if self.blackcount==1 else "s"}, filled with {letters if letters else "no"} letter{"" if letters==1 else "s"},\nwith {countV if countV else "no"} complete vertical word{"" if countV==1 else "s"} and {countH if countH else "no"} complete horizontal word{"" if countH==1 else "s"}.')
         
     def filterPrefix(prefix,words):
         result=[]
@@ -120,7 +136,6 @@ class Crossword:
         self.sortedVSlots=[]
         self.sortedSlots=[]
 
-        self.vslots=[]
         for i in range(self.height):
             startpos=0
             for j in range(self.grid[i].size+1):
@@ -158,6 +173,10 @@ class Crossword:
             for word in self.words:
                 if(len(word)==length):
                     self.wordsbylen[length].append(word)
+        if(not hasattr(self,'wordslongbylen')):
+            self.wordslongbylen={}
+            for k,v in self.wordsbylen.items():
+                self.wordslongbylen[k]=' '.join(v)
     
     def loadWords(self,filename):
         if(not hasattr(self,'hSlots') or not hasattr(self,'vSlots')):
@@ -173,18 +192,15 @@ class Crossword:
 
     # def validatePattern(pattern):
     def validate(self):
-        if(not hasattr(self,'wordslongbylen')):
-            self.wordslongbylen={}
-            for k,v in self.wordsbylen.items():
-                self.wordslongbylen[k]=' '.join(v)
+        
         for slot in self.sortedSlots:
             pattern=''
             for i in slot:
                 if(i==' '):
-                    pattern+='\w'
+                    pattern+=r'\w'
                 else:
                     pattern+=i
-            matches=re.findall(pattern,self.wordslongbylen[slot.size])
+            matches=re.match(pattern,self.wordslongbylen[slot.size])
             if(not matches):
                 return False
         return True
@@ -210,6 +226,7 @@ class Crossword:
         #     slotIdx=len(self.steptracks)
         #     prevWord=self.steptracks[-1][]
         wordList=self.wordsbylen[self.sortedSlots[slotIdx].size]
+        wordLong=self.wordslongbylen[self.sortedSlots[slotIdx].size]
         if(not prevWord):
             prevWordIdx=-1
         else:
@@ -222,16 +239,18 @@ class Crossword:
         #         pattern+='\w'
         #     else:
         #         pattern+=i
-        pattern=self.slot2str(self.sortedSlots[slotIdx]).replace(' ','\w')
+        pattern=self.slot2str(self.sortedSlots[slotIdx]).replace(' ',r'\w')
         for i in range(prevWordIdx+1,len(wordList)):
-            matches=re.findall(pattern,wordList[i])
+            self.debug+=1
+            if(self.debug%2000==0):print(self.debug,slotIdx,i,pattern)
+            matches=re.match(pattern,wordLong)
             if(matches):
-                temp=pattern.replace('\w',' ')
+                temp=pattern.replace(r'\w',' ')
                 self.sortedSlots[slotIdx][:]=list(wordList[i])
                 if(not self.validate()):
                     self.sortedSlots[slotIdx][:]=list(temp)
                     continue
-                self.steptracks.append((slotIdx,pattern.replace('\w',' '),wordList[i]))
+                self.steptracks.append((slotIdx,pattern.replace(r'\w',' '),wordList[i]))
                 # self.sortedSlots[slotIdx][:]=list(wordList[i])
                 return True
 
@@ -281,47 +300,30 @@ class Crossword:
                     
 
     def fill_with_given_words(self,wordsfile,texfile):
-        # self.words=[]
-        # with open(wordsfile,'r') as wf:
-        #     for l in wf:
-        #         if(l.strip()): self.words.append(l.strip())
-
-        # startpos=0
-        self.splitSlots()
+        # self.splitSlots()
         self.loadWords(wordsfile)
         self.initWordsByLen()
-        # self.steptracks=[]          # e=(hv:int; pos:int; prevstate:string; newstate:string)
-
-        # for i in range(self.height):
-        #     # self.hspaces[0][:]=list('abcd')
-        #     pass
-        #     for slot in self.hslots:
-        #         self.initWordsByLen(slot.size)
-        #         if(len(self.wordsbylen[slot.size])==0):
         if(self.placeWords()):
-            print('Solved!')
+            print(f"I filled it!\nResult captured in filled_{texfile}")
         else:
-            print('Failed')
-        
-        print(self.grid)
-        
+            print("Hey, it can't be filled with these words!")
         return
-        # GAME CANT BE COMPLETED
-                
 
-                # print(slot.size)
-                # slot[:]=list('x'*slot.size)
-
-        # print(self.hspaces)
-        # print(self.grid)
-        # self.clearGrid()
+    def solve(self,texfile,dictfile='dictionary.txt'):
+        self.loadWords(dictfile)
+        self.initWordsByLen()
+        if(self.placeWords()):
+            print(f"I solved it!\nResult captured in solved_{texfile}")
+        else:
+            print("Hey, it can't be solved!")
         print(self.grid)
-
+        return
 
 
 
 if __name__=='__main__':
-    a=Crossword('ass2/empty_grid_3.tex')
+    a=Crossword('ass2/empty_grid_2.tex')
     print(a)
-    a.fill_with_given_words('ass2/words_3.txt','test.tex')
+    a.solve('tete',dictfile='ass2/dictionary.txt')
+    # a.fill_with_given_words('ass2/words_1.txt','test.tex')
     # print(a.splitArray)
