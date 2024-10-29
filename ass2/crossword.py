@@ -173,14 +173,18 @@ class Crossword:
             for word in self.words:
                 if(len(word)==length):
                     self.wordsbylen[length].append(word)
-        if(not hasattr(self,'wordslongbylen')):
-            self.wordslongbylen={}
-            for k,v in self.wordsbylen.items():
-                self.wordslongbylen[k]=' '.join(v)
+        # if(not hasattr(self,'wordslongbylen')):
+        #     self.wordslongbylen={}
+        #     for k,v in self.wordsbylen.items():
+        #         self.wordslongbylen[k]=' '.join(v)
     
     def loadWords(self,filename):
         if(not hasattr(self,'hSlots') or not hasattr(self,'vSlots')):
             self.splitSlots()
+
+        if(not hasattr(self,'trieDict')):
+            self.trieDict={}
+        
         words=[]
         validLengths=set([i.size for i in self.hSlots]+[i.size for i in self.vSlots])
         with open(filename,'r') as f:
@@ -190,19 +194,49 @@ class Crossword:
                     words.append(i)
         self.words=np.array(words)
 
+        self.initWordsByLen()
+        for length,wordList in self.wordsbylen.items():
+            self.trieDict[length]={}
+
+            for i in range(len(wordList)):
+                anchor=self.trieDict[length]
+                for j in range(len(wordList[i])):
+                    # anchor=j
+                    if(wordList[i][j] not in anchor):
+                        if(j==len(wordList[i])-1):
+                            anchor[wordList[i][j]]=self.slot2str(wordList[i])
+                        else:
+                            anchor[wordList[i][j]]={}
+                    anchor=anchor[wordList[i][j]]
+
+        # try:
+        #     print(self.trieDict[3]['A']['X']['N'])
+        # except KeyError:
+        #     print('no such word')
+        # pass
+
+
     # def validatePattern(pattern):
     def validate(self):
         
         for slot in self.sortedSlots:
-            pattern=''
-            for i in slot:
-                if(i==' '):
-                    pattern+=r'\w'
-                else:
-                    pattern+=i
-            matches=re.match(pattern,self.wordslongbylen[slot.size])
-            if(not matches):
+            pattern=self.slot2str(slot)
+            # for i in slot:
+                # if(i==' '):
+                #     pattern+=r'\w'
+                # else:
+                # pattern+=i
+            # matches=re.match(pattern,self.wordslongbylen[slot.size])
+            anchor=self.trieDict[len(pattern)]
+            try:
+                for i in range(len(pattern)):
+                    if(pattern[i]==' '):
+                        True
+                    anchor=anchor[pattern[i]]
+            except KeyError:
                 return False
+            # if(not matches):
+            #     return False
         return True
                 
 
@@ -226,7 +260,7 @@ class Crossword:
         #     slotIdx=len(self.steptracks)
         #     prevWord=self.steptracks[-1][]
         wordList=self.wordsbylen[self.sortedSlots[slotIdx].size]
-        wordLong=self.wordslongbylen[self.sortedSlots[slotIdx].size]
+        # wordLong=self.wordslongbylen[self.sortedSlots[slotIdx].size]
         if(not prevWord):
             prevWordIdx=-1
         else:
