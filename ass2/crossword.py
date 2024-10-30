@@ -208,7 +208,7 @@ class Crossword:
                         else:
                             anchor[wordList[i][j]]={}
                     anchor=anchor[wordList[i][j]]
-
+        self.generateWordTries4Slots()
         # try:
         #     print(self.trieDict[3]['A']['X']['N'])
         # except KeyError:
@@ -252,6 +252,45 @@ class Crossword:
             result+=i
         return result
     
+    def generateWordTries4Slots(self):
+        def helper(anchor,pattern,debug):
+            if(isinstance(anchor,str) and not pattern):
+                return True
+            result=False
+            for k,v in anchor.copy().items():
+                if(k!=pattern[0] and not pattern[0]==' '):
+                    del anchor[k]
+                    pass
+                # elif(not helper(v,pattern[1:] if len(pattern)>1 else '',debug+k)):
+                else:
+                    result|=helper(v,pattern[1:] if len(pattern)>1 else '',debug+k)
+            return result
+            # if(not helper(v,pattern[1:] if len(pattern)>1 else '',debug+k))
+            # for k,v in anchor.copy().items():
+            #     if(pattern[0]!=k and pattern[0]!=' '):
+            #         del anchor[k]
+            #         # return False
+            #     else:
+            #         result|=helper(v,pattern[1:] if len(pattern)>1 else '',debug+k)
+            # return result
+                
+
+        if(not hasattr(self,'possibleTries')):
+            self.possibleTries={}
+        for i in range(len(self.hSlots)):
+            slotstr=self.slot2str(self.hSlots[i])
+            if(' ' not in slotstr):
+                self.possibleTries[('h',i)]=slotstr
+                continue
+            self.possibleTries[('h',i)]=self.trieDict[len(slotstr)]
+            if(not slotstr.strip()):
+                continue
+            # pattern=self.slot2str(self.hSlots[i])
+            helper(self.possibleTries[('h',i)],slotstr,'')
+        pass
+
+
+    
     def fitNextWord(self,slotIdx,prevWord):
         # if(not self.steptracks):
         #     slotIdx=0
@@ -287,7 +326,6 @@ class Crossword:
                 self.steptracks.append((slotIdx,pattern.replace(r'\w',' '),wordList[i]))
                 # self.sortedSlots[slotIdx][:]=list(wordList[i])
                 return True
-
         return False
 
     
@@ -356,7 +394,7 @@ class Crossword:
 
 
 if __name__=='__main__':
-    a=Crossword('ass2/empty_grid_2.tex')
+    a=Crossword('ass2/partial_grid_3.tex')
     print(a)
     a.solve('tete',dictfile='ass2/dictionary.txt')
     # a.fill_with_given_words('ass2/words_1.txt','test.tex')
