@@ -1,6 +1,7 @@
 # EDIT THE FILE WITH YOUR SOLUTION
 import re
 import numpy as np
+import copy
 
 class Crossword:
     def __init__(self,filename) -> None:
@@ -132,6 +133,8 @@ class Crossword:
         # result=[]
         self.hSlots=[]
         self.vSlots=[]
+        self.nhSlots={}
+        self.nvSlots={}
         self.sortedHSlots=[]
         self.sortedVSlots=[]
         self.sortedSlots=[]
@@ -142,6 +145,7 @@ class Crossword:
                 if(j==self.grid[i].size or self.grid[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.hSlots.append(self.grid[i,startpos:j])
+                        self.nhSlots[(i,startpos)]=self.grid[i,startpos:j]
                     startpos=j+1
         for i in range(self.width):
             startpos=0
@@ -149,6 +153,7 @@ class Crossword:
                 if(j==self.grid.T[i].size or self.grid.T[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.vSlots.append(self.grid.T[i,startpos:j])
+                        self.nvSlots[(i,startpos)]=self.grid.T[i,startpos:j]
                     startpos=j+1
 
         self.sortedHSlots=sorted(self.hSlots,key=lambda x:x.size)
@@ -208,7 +213,7 @@ class Crossword:
                         else:
                             anchor[wordList[i][j]]={}
                     anchor=anchor[wordList[i][j]]
-        self.generateWordTries4Slots()
+        self.generateWordTries()
         # try:
         #     print(self.trieDict[3]['A']['X']['N'])
         # except KeyError:
@@ -252,18 +257,20 @@ class Crossword:
             result+=i
         return result
     
-    def generateWordTries4Slots(self):
-        def helper(anchor,pattern,debug):
-            if(isinstance(anchor,str) and not pattern):
+    def generateWordTries(self):
+        def helper(prevAnchor,idx,pattern,debug):
+            if(isinstance(prevAnchor[idx],str) and not pattern):
                 return True
             result=False
-            for k,v in anchor.copy().items():
+            for k,v in prevAnchor[idx].copy().items():
                 if(k!=pattern[0] and not pattern[0]==' '):
-                    del anchor[k]
+                    del prevAnchor[idx][k]
                     pass
                 # elif(not helper(v,pattern[1:] if len(pattern)>1 else '',debug+k)):
                 else:
-                    result|=helper(v,pattern[1:] if len(pattern)>1 else '',debug+k)
+                    result|=helper(prevAnchor[idx],k,pattern[1:] if len(pattern)>1 else '',debug+k)
+            if(not result):
+                del prevAnchor[idx]
             return result
             # if(not helper(v,pattern[1:] if len(pattern)>1 else '',debug+k))
             # for k,v in anchor.copy().items():
@@ -275,19 +282,42 @@ class Crossword:
             # return result
                 
 
-        if(not hasattr(self,'possibleTries')):
-            self.possibleTries={}
-        for i in range(len(self.hSlots)):
-            slotstr=self.slot2str(self.hSlots[i])
+        if(not hasattr(self,'possibleSlotTries')):
+            self.possibleSlotTries={}
+        for k,v in self.nhSlots.items():
+            slotstr=self.slot2str(self.nhSlots[k])
             if(' ' not in slotstr):
-                self.possibleTries[('h',i)]=slotstr
+                self.possibleSlotTries[('h',k)]=slotstr
                 continue
-            self.possibleTries[('h',i)]=self.trieDict[len(slotstr)]
+            self.possibleSlotTries[('h',k)]=copy.deepcopy(self.trieDict[len(slotstr)])
             if(not slotstr.strip()):
                 continue
             # pattern=self.slot2str(self.hSlots[i])
-            helper(self.possibleTries[('h',i)],slotstr,'')
+            helper(self.possibleSlotTries,('h',k),slotstr,'')
+        for k,v in self.nvSlots.items():
+            slotstr=self.slot2str(self.nvSlots[k])
+            if(' ' not in slotstr):
+                self.possibleSlotTries[('v',k)]=slotstr
+                continue
+            self.possibleSlotTries[('v',k)]=copy.deepcopy(self.trieDict[len(slotstr)])
+            if(not slotstr.strip()):
+                continue
+            # pattern=self.slot2str(self.hSlots[i])
+            helper(self.possibleSlotTries,('v',k),slotstr,'')
         pass
+
+    def intersectTries(self):
+        def helper(prevAnchor,idx,pattern):
+            pass
+
+        self.possibleTries={}
+        for sidx,trie in self.possibleTries.items():
+            if(isinstance(trie,str)):
+                continue
+            if(sidx[0]=='v'):
+                break
+            self.possibleTries[sidx[1]]=copy.deepcopy(v)
+            helper(self.possibleTries,sidx[1],)
 
 
     
