@@ -39,7 +39,35 @@ def display(grid):
     print('  ', '-' * (2 * dim + 3))
 
 def longest_path(i, j, grid):
-    return 0, [[' ' * dim] for _ in range(dim)]
+    i-=1
+    j-=1
+    path_grid=[[' ']* dim for _ in range(dim)]
+    import copy
+    def helper(path,i,j,direction):
+        newpath=copy.deepcopy(path)
+        if(not (0<=i<10 and 0<=j<10)):
+            return 0,newpath
+        if(grid[i][j]!='*'):
+            return 0,newpath
+        len1=0
+        path1=None
+        len2=0
+        path2=None
+        newpath[i][j]=chr(0x2197 if direction==(-1,1) else 0x2199)
+        len1,path1=helper(newpath,i+direction[0],j+direction[1],direction)
+        len2,path2=helper(newpath,i+1,j+1,(-direction[0],-direction[1]))
+
+        if(0==len1==len2):
+            return 1,newpath
+        # newpath
+        if(len1>=len2):
+            return 1+len1,path1
+        else:
+            return 1+len2,path2
+    plen,path_grid=helper(path_grid,i,j,(-1,1))
+    return plen,path_grid
+
+    # return 0, [[' ' * dim] for _ in range(dim)]
     # REPLACE THE RETURN STATEMENT ABOVE WITH YOUR CODE
 
 # POSSIBLY DEFINE OTHER FUNCTIONS
