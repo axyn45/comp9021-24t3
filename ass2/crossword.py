@@ -2,6 +2,7 @@
 import re
 import numpy as np
 import copy
+from itertools import tee
 
 class Crossword:
     def __init__(self,filename) -> None:
@@ -138,6 +139,9 @@ class Crossword:
         self.sortedHSlots=[]
         self.sortedVSlots=[]
         self.sortedSlots=[]
+        self.slots={}
+        self.slotsKeys=[]
+
 
         for i in range(self.height):
             startpos=0
@@ -145,7 +149,7 @@ class Crossword:
                 if(j==self.grid[i].size or self.grid[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.hSlots.append(self.grid[i,startpos:j])
-                        self.nhSlots[(i,startpos)]=self.grid[i,startpos:j]
+                        self.nhSlots[('h',(i,startpos))]=self.grid[i,startpos:j]
                     startpos=j+1
         for i in range(self.width):
             startpos=0
@@ -153,12 +157,15 @@ class Crossword:
                 if(j==self.grid.T[i].size or self.grid.T[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.vSlots.append(self.grid.T[i,startpos:j])
-                        self.nvSlots[(i,startpos)]=self.grid.T[i,startpos:j]
+                        self.nvSlots[('v',(i,startpos))]=self.grid.T[i,startpos:j]
                     startpos=j+1
 
         self.sortedHSlots=sorted(self.hSlots,key=lambda x:x.size)
         self.sortedVSlots=sorted(self.vSlots,key=lambda x:x.size)
         self.sortedSlots=sorted(self.sortedHSlots+self.sortedVSlots,key=lambda x:x.size)
+        self.slots={**self.nhSlots,**self.nvSlots}
+        for i in self.slots.keys():
+            self.slotsKeys.append(i)
         # pass
 
     def clearGrid(self):
@@ -232,7 +239,7 @@ class Crossword:
                 # else:
                 # pattern+=i
             # matches=re.match(pattern,self.wordslongbylen[slot.size])
-            if(not self.trieMatch(self.possibleSlotTries[('v',key)],pattern)):
+            if(not self.trieMatch(self.slotTries[key],pattern)):
                 return False
             # anchor=self.trieDict[len(pattern)]
             # try:
@@ -249,7 +256,7 @@ class Crossword:
 
     def isSolved(self):
         for i in self.sortedSlots:
-            if(np.isin(' ',i)):
+            if(np.isin(' ',i) or not self.trieMatch(self.slotTries,i)):
                 return False
         return True
 
@@ -274,32 +281,37 @@ class Crossword:
         return result
 
     def generateWordTries(self):
-        if(not hasattr(self,'possibleSlotTries')):
-            self.possibleSlotTries={}
+        if(not hasattr(self,'slotTries')):
+            self.slotTries={}
         for k,v in self.nhSlots.items():
             slotstr=self.slot2str(self.nhSlots[k])
             if(' ' not in slotstr):
-                self.possibleSlotTries[('h',k)]=self.word2trie(slotstr)
+                self.slotTries[k]=self.word2trie(slotstr)
                 continue
-            self.possibleSlotTries[('h',k)]=copy.deepcopy(self.trieDict[len(slotstr)])
+            self.slotTries[k]=copy.deepcopy(self.trieDict[len(slotstr)])
             if(not slotstr.strip()):
                 continue
-            self.reduceTrie(self.possibleSlotTries,('h',k),slotstr,'')
+            self.reduceTrie(self.slotTries,k,slotstr,'')
         
         for k,v in self.nvSlots.items():
             slotstr=self.slot2str(self.nvSlots[k])
             if(' ' not in slotstr):
-                self.possibleSlotTries[('v',k)]=self.word2trie(slotstr)
+                self.slotTries[k]=self.word2trie(slotstr)
                 continue
-            self.possibleSlotTries[('v',k)]=copy.deepcopy(self.trieDict[len(slotstr)])
+            self.slotTries[k]=copy.deepcopy(self.trieDict[len(slotstr)])
             if(not slotstr.strip()):
                 continue
-            self.reduceTrie(self.possibleSlotTries,('v',k),slotstr,'')
-        a=self.enumTrie(self.possibleSlotTries[('h',(0,5))])
-        for i in a:
-            print(i,end=' ')
-            pass
+            self.reduceTrie(self.slotTries,k,slotstr,'')
+        # a=self.enumTrie(self.slotTries[('h',(0,5))])
+        # for i in a:
+        #     print(i,end=' ')
+        #     pass
+        self.candidates={}
+        for k,v in self.slots.items():
+            x=None
+            self.candidates[k],x=tee(self.enumTrie(self.slotTries[k]))
         pass
+        
 
     def word2trie(self,word,pos=0):
         if(len(word)==pos):
@@ -307,22 +319,22 @@ class Crossword:
         return {word[pos]:self.word2trie(word,pos+1)}
 
 
-    def intersectTries(self):
-        def helper(newTrie,hTrie,vTrie,idx):
+    # def intersectTries(self):
+    #     def helper(newTrie,hTrie,vTrie,idx):
             
-            pass
+    #         pass
 
-        self.possibleTries={}
-        for sidx,trie in self.possibleSlotTries.items():
-            # if(isinstance(trie,str)):
-            #     continue
-            if(sidx[0]=='v'):
-                break
-            self.possibleTries[sidx[1]]=copy.deepcopy(trie)
-            # print(self.trieMatch(trie,'MUCH'))
+    #     self.possibleTries={}
+    #     for sidx,trie in self.slotTries.items():
+    #         # if(isinstance(trie,str)):
+    #         #     continue
+    #         if(sidx[0]=='v'):
+    #             break
+    #         self.possibleTries[sidx[1]]=copy.deepcopy(trie)
+    #         # print(self.trieMatch(trie,'MUCH'))
 
-            helper(self.possibleTries,trie,self.possibleSlotTries[('v',sidx[1])],sidx[1])
-            pass
+    #         helper(self.possibleTries,trie,self.slotTries[('v',sidx[1])],sidx[1])
+    #         pass
 
     def trieMatch(self,trie,pattern):
         if(isinstance(trie,str)):
@@ -347,60 +359,61 @@ class Crossword:
             for k,v in trie.items():
                 yield from self.enumTrie(v)
         # yield None
-        
+    # def enumTrieFrom(self,trie,word,idx):
+    #     if(isinstance(trie,str)):
+    #         yield trie
+    #     else:
+    #         for k,v in trie.items():
+    #             if()
+    #             yield from self.enumTrie(v)
 
 
     
-    def fitNextWord(self,slotIdx,prevWord):
-        # wordList=self.wordsbylen[self.sortedSlots[slotIdx].size]
-        # wordLong=self.wordslongbylen[self.sortedSlots[slotIdx].size]
-        # if(not prevWord):
-        #     prevWordIdx=-1
-        # else:
-        #     prevWordIdx=wordList.index(prevWord)
-        # if(prevWordIdx==len(wordList)-1):
-        #     return False
-
-        # pattern=self.slot2str(self.sortedSlots[slotIdx]).replace(' ',r'\w')
-        for i in range(prevWordIdx+1,len(wordList)):
-            # self.debug+=1
-            # if(self.debug%2000==0):print(self.debug,slotIdx,i,pattern)
-            matches=re.match(pattern,wordLong)
-            if(matches):
-                temp=pattern.replace(r'\w',' ')
-                self.sortedSlots[slotIdx][:]=list(wordList[i])
-                if(not self.validateVertical()):
-                    self.sortedSlots[slotIdx][:]=list(temp)
-                    continue
-                self.steptracks.append((slotIdx,pattern.replace(r'\w',' '),wordList[i]))
-                # self.sortedSlots[slotIdx][:]=list(wordList[i])
+    def fitNextWord(self,slotIdx,iterObj):
+        pattern=self.slot2str(self.slots[slotIdx])
+        iterObj,backup=tee(iterObj)
+        for word in backup:
+            if(self.debug%100000==0):
+                print(self.debug,word)
+            self.debug+=1
+            if(not self.trieMatch(self.slotTries[slotIdx],pattern)):
+                continue
+            self.slots[slotIdx][:]=list(word)
+            if(self.validateVertical()):
+                self.steptracks.append((slotIdx,pattern,iterObj))
                 return True
+            else:
+                self.slots[slotIdx][:]=list(pattern)
         return False
 
     
-    def backtrack(self,idx,prevWord):
-        if(idx==len(self.sortedSlots)):
+    def backtrack(self,idx,iterObj):
+        if(idx==len(self.nhSlots)):
             return True
-        if(self.fitNextWord(idx,prevWord)):
-            return self.backtrack(idx+1,'')
+        if(self.fitNextWord(idx,iterObj)):
+            nextKey=self.slotsKeys[self.slotsKeys.index(idx)+1]
+            return self.backtrack(nextKey,self.candidates[nextKey])
         return False
         
 
     def placeWords(self):
+        self.debug=0
         if(not hasattr(self,'steptracks')):
             self.steptracks=[]  # e=(pos:int; prevstate:string; newstate:string)
         if(self.isSolved()):
             return True
-        slotIdx=0
-        prevWord=''
+        slotIdx=self.slotsKeys[0]
+        prevWord=self.candidates[slotIdx]
         while(not self.backtrack(slotIdx,prevWord)):
             if(not len(self.steptracks)):
                 return False
             lastStep=self.steptracks[-1]
-            self.sortedSlots[lastStep[0]][:]=list(lastStep[1])
+            self.slots[lastStep[0]][:]=list(lastStep[1])
             del self.steptracks[-1]
-            prevWord=lastStep[2].strip()
+            prevWord=lastStep[2]
             slotIdx=lastStep[0]
+
+        print(self.grid)
 
 
         return True
@@ -432,7 +445,7 @@ class Crossword:
 
 # count=0
 if __name__=='__main__':
-    a=Crossword('ass2/partial_grid_3.tex')
+    a=Crossword('ass2/empty_grid_3.tex')
     print(a)
     a.solve('tete',dictfile='ass2/dictionary.txt')
     # a.fill_with_given_words('ass2/words_1.txt','test.tex')
