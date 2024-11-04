@@ -224,39 +224,50 @@ class Crossword:
                             anchor[wordList[i][j]]={}
                     anchor=anchor[wordList[i][j]]
         self.generateWordTries()
-        print(self.validateVertical())
+        # print(self.validateVertical())
         # try:
         #     print(self.trieDict[3]['A']['X']['N'])
         # except KeyError:
         #     print('no such word')
         pass
 
-    def trieMatch(self,trieIdx,pattern,isRoot=True):
-        if(trieIdx in self.matchCache):
-            if(pattern in self.matchCache[trieIdx]):
-                return self.matchCache[trieIdx][pattern]
-        trie=self.slotTries[trieIdx]
+    def trieMatch(self,trieIdx,pattern,trie=None,isRoot=True,):
+        if(pattern and not pattern.strip()):
+            return True
+        if(isRoot):
+            trie=self.slotTries[trieIdx]
+            if(trieIdx in self.matchCache):
+                if(pattern in self.matchCache[trieIdx]):
+                    # pass
+                    return self.matchCache[trieIdx][pattern]
+                else:
+                    self.matchCache[trieIdx][pattern]=False
+            else:
+                self.matchCache[trieIdx]={}
+                self.matchCache[trieIdx][pattern]=False
+
         if(isinstance(trie,str)):
             if(not pattern):
                 return True
             else:
                 return False
         elif(pattern[0] in trie):
-            result=self.trieMatch(trieIdx,pattern[1:],False)
+            result=self.trieMatch(trieIdx,pattern[1:],trie[pattern[0]],False)
             if(isRoot):
                 self.matchCache[trieIdx][pattern]=result
             return result
         elif(pattern[0]==' '):
             result=False
             for k,v in trie.items():
-                result|=self.trieMatch(trieIdx,pattern[1:],False)
-                if(result):return result
+                result|=self.trieMatch(trieIdx,pattern[1:],v,False)
+                if(result):
+                    break
             if(isRoot):
                 self.matchCache[trieIdx][pattern]=result
             return result
         else:
-            if(isRoot):
-                self.matchCache[trieIdx][pattern]=False
+            # if(isRoot):
+            #     self.matchCache[trieIdx][pattern]=False
             return False
 
     def validateVertical(self):
@@ -271,9 +282,10 @@ class Crossword:
                 
 
     def isSolved(self):
-        # for i in self.sortedSlots:
-        # if(np.isin(' ',i) or not self.trieMatch(self.slotTries,i)):
-        #         return False
+        for k,v in self.nvSlots.items():
+            pattern=self.slot2str(v)
+            if(' ' in pattern or not self.trieMatch(k,pattern)):
+                return False
         return True
 
     def slot2str(self,slot):
@@ -333,26 +345,6 @@ class Crossword:
         if(len(word)==pos):
             return word
         return {word[pos]:self.word2trie(word,pos+1)}
-
-
-    # def intersectTries(self):
-    #     def helper(newTrie,hTrie,vTrie,idx):
-            
-    #         pass
-
-    #     self.possibleTries={}
-    #     for sidx,trie in self.slotTries.items():
-    #         # if(isinstance(trie,str)):
-    #         #     continue
-    #         if(sidx[0]=='v'):
-    #             break
-    #         self.possibleTries[sidx[1]]=copy.deepcopy(trie)
-    #         # print(self.trieMatch(trie,'MUCH'))
-
-    #         helper(self.possibleTries,trie,self.slotTries[('v',sidx[1])],sidx[1])
-    #         pass
-
-    
     
     def enumTrie(self,trie):
         if(isinstance(trie,str)):
@@ -377,13 +369,11 @@ class Crossword:
     #             if()
     #             yield from self.enumTrie(v)
 
-
-    
     def fitNextWord(self,slotIdx,iterObj):
         pattern=self.slot2str(self.slots[slotIdx])
         iterObj,backup=tee(iterObj)
         for word in backup:
-            if(self.debug%50000==0):
+            if(self.debug%100000==0):
                 print(self.debug,slotIdx,word,end='\t\t')
                 for k,v in self.nhSlots.items():
                     print(self.slot2str(v),end=' ')
@@ -391,14 +381,17 @@ class Crossword:
             self.debug+=1
             if(not self.trieMatch(slotIdx,pattern)):
                 continue
+            
+                # return True
             self.slots[slotIdx][:]=list(word)
             if(self.validateVertical()):
+                # if(self.slots[slotIdx].size==len(word)):
+                #     return True
                 self.steptracks.append((slotIdx,pattern,backup))
                 return True
             else:
                 self.slots[slotIdx][:]=list(pattern)
         return False
-
     
     def backtrack(self,idx,iterObj):
         if(self.slotsKeys.index(idx)>len(self.nhSlots)-1):
@@ -407,7 +400,6 @@ class Crossword:
             nextKey=self.slotsKeys[self.slotsKeys.index(idx)+1]
             return self.backtrack(nextKey,self.candidates[nextKey])
         return False
-        
 
     def placeWords(self):
         self.debug=0
@@ -424,12 +416,8 @@ class Crossword:
             self.slots[lastStep[0]][:]=list(lastStep[1])
             prevWord=lastStep[2]
             slotIdx=lastStep[0]
-
             del self.steptracks[-1]
-
-        print(self.grid)
-
-
+        # print(self.grid)
         return True
 
 
@@ -453,6 +441,7 @@ class Crossword:
         return
 
     def solve(self,texfile,dictfile='dictionary.txt'):
+        start_time = time.time()
         self.loadWords(dictfile)
         self.initWordsByLen()
         a=self.enumTrie(self.slotTries[self.slotsKeys[0]])
@@ -464,12 +453,14 @@ class Crossword:
         else:
             print("Hey, it can't be solved!")
         print(self.grid)
+        end_time = time.time()
+        print(end_time-start_time,'secs')
         return
 
 
 # count=0
 if __name__=='__main__':
-    a=Crossword('ass2/partial_grid_3.tex')
+    a=Crossword('ass2/empty_grid_3.tex')
     print(a)
     a.solve('tete',dictfile='ass2/dictionary.txt')
     # a.fill_with_given_words('ass2/words_1.txt','test.tex')
