@@ -144,8 +144,12 @@ class Crossword:
         # self.sortedVSlots=[]
         # self.sortedSlots=[]
         self.slots={}
+        self.hslots={}
+        self.vslots={}
+
         # self.sslots={}
         self.slotsKeys=[]
+        self.hslotsKeys=[]
         self.hSlotLut={}
         self.vSlotLut={}
 
@@ -156,6 +160,7 @@ class Crossword:
                 if(j==self.grid[i].size or self.grid[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.slots[('h',(i,startpos))]=self.grid[i,startpos:j]
+                        self.hslots[('h',(i,startpos))]=self.grid[i,startpos:j]
                         for k in range(startpos,j):
                             self.hSlotLut[(i,k)]=('h',(i,startpos))
                     startpos=j+1
@@ -165,6 +170,7 @@ class Crossword:
                 if(j==self.grid.T[i].size or self.grid.T[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.slots[('v',(startpos,i))]=self.grid.T[i,startpos:j]
+                        self.vslots[('v',(startpos,i))]=self.grid.T[i,startpos:j]
                         for k in range(startpos,j):
                             self.vSlotLut[(k,i)]=('v',(startpos,i))
                     startpos=j+1
@@ -201,6 +207,9 @@ class Crossword:
         #     self.slotsKeys.append(i)
         for i in self.slots.keys():
             self.slotsKeys.append(i)
+
+        for i in self.hslots.keys():
+            self.hslotsKeys.append(i)
         # pass
 
     def clearGrid(self):
@@ -305,9 +314,9 @@ class Crossword:
     def validateVertical(self,key):
         # return True
         for i in range(key[1][1],key[1][1]+self.slots[key].size):
-            vkey=('v',(key[1][0],i))
-            pattern=self.slot2str(self.slots[self.vSlotLut[(vkey[1])]])
-            if(not self.trieMatch(self.vSlotLut[(vkey[1])],pattern)):
+            vkey=(key[1][0],i)
+            pattern=self.slot2str(self.slots[self.vSlotLut[vkey]])
+            if(not self.trieMatch(self.vSlotLut[vkey],pattern)):
                 return False
         return True
     
@@ -410,12 +419,12 @@ class Crossword:
     #             yield from self.enumTrie(v)
 
     def fitNextWord(self,slotIdx,iterObj):
-        pattern=self.slot2str(self.slots[slotIdx])
+        pattern=self.slot2str(self.hslots[slotIdx])
         iterObj,backup=tee(iterObj)
         for word in backup:
             if(self.debug%100000==0):
                 print(self.debug,slotIdx,word,end='\t\t')
-                for k,v in self.slots.items():
+                for k,v in self.hslots.items():
                     print(self.slot2str(v),end=' ')
                 print()
             self.debug+=1
@@ -423,22 +432,24 @@ class Crossword:
                 continue
             
                 # return True
-            self.slots[slotIdx][:]=list(word)
-            isValid=self.validateVertical(slotIdx) if slotIdx[0]=='h' else self.validateHorizontal(slotIdx)
+            self.hslots[slotIdx][:]=list(word)
+            isValid=self.validateVertical(slotIdx) #if slotIdx[0]=='h' else self.validateHorizontal(slotIdx)
             if(isValid):
                 # if(self.slots[slotIdx].size==len(word)):
                 #     return True
                 self.steptracks.append((slotIdx,pattern,backup))
                 return True
             else:
-                self.slots[slotIdx][:]=list(pattern)
+                self.hslots[slotIdx][:]=list(pattern)
         return False
     
     def backtrack(self,idx,iterObj):
-        if(self.slotsKeys.index(idx)>=len(self.slots)-1):
+        if(not idx):
             return True
         if(self.fitNextWord(idx,iterObj)):
-            nextKey=self.slotsKeys[self.slotsKeys.index(idx)+1]
+            if(self.hslotsKeys.index(idx)>=len(self.hslots)-1):
+                return self.backtrack(0,None)
+            nextKey=self.hslotsKeys[self.hslotsKeys.index(idx)+1]
             return self.backtrack(nextKey,self.candidates[nextKey])
         return False
 
@@ -448,7 +459,7 @@ class Crossword:
             self.steptracks=[]  # e=(pos:int; prevstate:string; newstate:string)
         if(self.isSolved()):
             return True
-        slotIdx=self.slotsKeys[0]
+        slotIdx=self.hslotsKeys[0]
         prevWord=self.candidates[slotIdx]
         while(not self.backtrack(slotIdx,prevWord)):
             if(not len(self.steptracks)):
