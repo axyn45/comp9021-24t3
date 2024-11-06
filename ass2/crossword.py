@@ -86,6 +86,7 @@ class Crossword:
                     self.blackcount+=1
                 elif(not i[j]==''):
                     self.lettercount+=1
+        self.gridbackup=copy.deepcopy(self.grid)
         self.splitSlots()
 
         self.matchCache={}
@@ -144,6 +145,7 @@ class Crossword:
         # self.sortedVSlots=[]
         # self.sortedSlots=[]
         self.slots={}
+        self.slotsbackup={}
         self.hslots={}
         self.vslots={}
 
@@ -160,6 +162,7 @@ class Crossword:
                 if(j==self.grid[i].size or self.grid[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.slots[('h',(i,startpos))]=self.grid[i,startpos:j]
+                        self.slotsbackup[('h',(i,startpos))]=self.gridbackup[i,startpos:j]
                         self.hslots[('h',(i,startpos))]=self.grid[i,startpos:j]
                         for k in range(startpos,j):
                             self.hSlotLut[(i,k)]=('h',(i,startpos))
@@ -170,6 +173,7 @@ class Crossword:
                 if(j==self.grid.T[i].size or self.grid.T[i,j]=='*'):
                     if(not startpos==j and j-startpos>1):
                         self.slots[('v',(startpos,i))]=self.grid.T[i,startpos:j]
+                        self.slotsbackup[('v',(startpos,i))]=self.gridbackup.T[i,startpos:j]
                         self.vslots[('v',(startpos,i))]=self.grid.T[i,startpos:j]
                         for k in range(startpos,j):
                             self.vSlotLut[(k,i)]=('v',(startpos,i))
@@ -272,7 +276,7 @@ class Crossword:
         #     print('no such word')
         pass
 
-    def trieMatch(self,trieIdx,pattern,trie=None,isRoot=True,):
+    def trieMatch(self,trieIdx,pattern,trie=None,isRoot=True):
         if(pattern and (not pattern.strip())):
             return True
         if(isRoot):
@@ -298,11 +302,12 @@ class Crossword:
                 self.matchCache[trieIdx][pattern]=result
             return result
         elif(pattern[0]==' '):
-            result=False
-            for k,v in trie.items():
-                result|=self.trieMatch(trieIdx,pattern[1:],v,False)
-                if(result):
-                    break
+            # result=False
+            # for k,v in trie.items():
+            #     result|=self.trieMatch(trieIdx,pattern[1:],v,False)
+            #     if(result):
+            #         break
+            result=True
             if(isRoot):
                 self.matchCache[trieIdx][pattern]=result
             return result
@@ -356,6 +361,22 @@ class Crossword:
         if(not result):
             del prevAnchor[idx]
         return result
+    def cutTrie(self,prevAnchor,idx,pattern):
+        # return True
+        if(isinstance(prevAnchor[idx],str) and not pattern):
+            return True
+        result=False
+        if(pattern[0]==' '):
+            return True
+        for k,v in prevAnchor[idx].copy().items():
+            if(k!=pattern[0]):
+                del prevAnchor[idx][k]
+                pass
+            else:
+                result|=self.reduceTrie(prevAnchor[idx],k,pattern[1:] if len(pattern)>1 else '')
+        if(not result):
+            del prevAnchor[idx]
+        return result
 
     def generateWordTries(self):
         if(not hasattr(self,'slotTries')):
@@ -370,23 +391,23 @@ class Crossword:
                 continue
             self.reduceTrie(self.slotTries,k,slotstr)
         
-        for k,v in self.slots.items():
-            slotstr=self.slot2str(self.slots[k])
-            if(' ' not in slotstr):
-                self.slotTries[k]=self.word2trie(slotstr)
-                continue
-            self.slotTries[k]=copy.deepcopy(self.trieDict[len(slotstr)])
-            if(not slotstr.strip()):
-                continue
-            self.reduceTrie(self.slotTries,k,slotstr)
+        # for k,v in self.slots.items():
+        #     slotstr=self.slot2str(self.slots[k])
+        #     if(' ' not in slotstr):
+        #         self.slotTries[k]=self.word2trie(slotstr)
+        #         continue
+        #     self.slotTries[k]=copy.deepcopy(self.trieDict[len(slotstr)])
+        #     if(not slotstr.strip()):
+        #         continue
+        #     self.reduceTrie(self.slotTries,k,slotstr)
         # a=self.enumTrie(self.slotTries[('h',(0,5))])
         # for i in a:
         #     print(i,end=' ')
         #     pass
-        self.candidates={}
-        for k,v in self.slots.items():
-            x=None
-            self.candidates[k],x=tee(self.enumTrie(self.slotTries[k]))
+        # self.candidates={}
+        # for k,v in self.slots.items():
+        #     x=None
+        #     self.candidates[k],x=tee(self.enumTrie(self.slotTries[k]))
         pass
         
 
@@ -418,39 +439,70 @@ class Crossword:
     #             if()
     #             yield from self.enumTrie(v)
 
-    def fitNextWord(self,slotIdx,iterObj):
-        pattern=self.slot2str(self.hslots[slotIdx])
-        iterObj,backup=tee(iterObj)
-        for word in backup:
-            if(self.debug%100000==0):
-                print(self.debug,slotIdx,word,end='\t\t')
-                for k,v in self.hslots.items():
-                    print(self.slot2str(v),end=' ')
-                print()
+    def fitNextWord(self,slotIdx,candidates):
+        if(not candidates):
+            return False
+        pattern=self.slot2str(self.slots[slotIdx])
+        # iterObj,backup=tee(iterObj)
+        # trieBackup={0:copy.deepcopy(trie)}
+        # if(not self.slot2str(self.slots[slotIdx])==self.slot2str(self.slotsbackup[slotIdx])):
+        #     self.reduceTrie(trieBackup,0,self.slot2str(self.slots[slotIdx]))
+        # candidates=self.enumTrie(trieBackup[0])
+        # candidates,candidatesBk=tee(candidates)
+        for word in candidates:
+            if(self.debug%200==0):
+                print(self.debug,slotIdx,word)
+                # for k,v in self.hslots.items():
+                #     print(self.slot2str(v),end=' ')
+                print(self.grid)
             self.debug+=1
-            if(not self.trieMatch(slotIdx,pattern)):
-                continue
+            # if(not self.trieMatch(slotIdx,pattern)):
+            #     continue
             
                 # return True
-            self.hslots[slotIdx][:]=list(word)
-            isValid=self.validateVertical(slotIdx) #if slotIdx[0]=='h' else self.validateHorizontal(slotIdx)
-            if(isValid):
+            self.slots[slotIdx][:]=list(word)
+            # isValid=self.validateVertical(slotIdx) #if slotIdx[0]=='h' else self.validateHorizontal(slotIdx)
+            # if(isValid):
                 # if(self.slots[slotIdx].size==len(word)):
                 #     return True
-                self.steptracks.append((slotIdx,pattern,backup))
-                return True
-            else:
-                self.hslots[slotIdx][:]=list(pattern)
-        return False
-    
-    def backtrack(self,idx,iterObj):
+            self.steptracks.append((slotIdx,pattern,candidates))
+            return True
+            # else:
+            #     self.hslots[slotIdx][:]=list(pattern)
+        # return False
+    def getCandidates(self,idx):
+        # st=time.time()
+        trieBackup={0:copy.deepcopy(self.slotTries[idx])}
+        pattern=self.slot2str(self.slots[idx])
+        rawpattern=self.slot2str(self.slotsbackup[idx])
+        if(not pattern==rawpattern):
+            self.cutTrie(trieBackup,0,pattern)
+        else:
+            return self.enumTrie(trieBackup[0])
+        if(not len(trieBackup)):
+            return None
+        # return trieBackup[0]
+        # print()
+        # if(not self.debug%100):
+        #     print(time.time()-st)
+        return self.enumTrie(trieBackup[0])
+    def backtrack(self,idx,candidates):
         if(not idx):
             return True
-        if(self.fitNextWord(idx,iterObj)):
-            if(self.hslotsKeys.index(idx)>=len(self.hslots)-1):
+        # pattern=self.slot2str(self.slots[idx])
+        # if(candidates is None):
+        #     trieBackup={0:copy.deepcopy(trie)}
+        #     rawpattern=self.slot2str(self.slotsbackup[idx])
+        #     if(not pattern==rawpattern):
+        #         self.reduceTrie(trieBackup,0,pattern)
+        #     if(not len(trieBackup)):
+        #         return False
+        #     candidates=self.enumTrie(trieBackup[0])
+        if(self.fitNextWord(idx,candidates)):
+            if(self.slotsKeys.index(idx)>=len(self.slots)-1):
                 return self.backtrack(0,None)
-            nextKey=self.hslotsKeys[self.hslotsKeys.index(idx)+1]
-            return self.backtrack(nextKey,self.candidates[nextKey])
+            nextKey=self.slotsKeys[self.slotsKeys.index(idx)+1]
+            return self.backtrack(nextKey,self.getCandidates(nextKey))
         return False
 
     def placeWords(self):
@@ -460,13 +512,15 @@ class Crossword:
         if(self.isSolved()):
             return True
         slotIdx=self.hslotsKeys[0]
-        prevWord=self.candidates[slotIdx]
-        while(not self.backtrack(slotIdx,prevWord)):
+        # prevWord=self.candidates[slotIdx]
+        # trie=self.slotTries[slotIdx]
+        cdd=self.getCandidates(slotIdx)
+        while(not self.backtrack(slotIdx,cdd)):
             if(not len(self.steptracks)):
                 return False
             lastStep=self.steptracks[-1]
             self.slots[lastStep[0]][:]=list(lastStep[1])
-            prevWord=lastStep[2]
+            cdd=lastStep[2]
             slotIdx=lastStep[0]
             del self.steptracks[-1]
         # print(self.grid)
@@ -474,8 +528,6 @@ class Crossword:
 
     def fill_with_given_words(self,wordsfile,texfile):
         # self.splitSlots()
-        
-        
         self.loadWords(wordsfile)
         self.initWordsByLen()
         a=self.enumTrie(self.slotTries[self.slotsKeys[0]])
@@ -508,7 +560,7 @@ class Crossword:
 
 # count=0
 if __name__=='__main__':
-    a=Crossword('ass2/empty_grid_2.tex')
+    a=Crossword('ass2/empty_grid_1.tex')
     print(a)
     a.solve('tete',dictfile='ass2/dictionary.txt')
     # a.fill_with_given_words('ass2/words_1.txt','test.tex')
