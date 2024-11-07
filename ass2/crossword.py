@@ -562,9 +562,8 @@ class Crossword:
                 pattern = self.slot2str(self.hslots[slotIdx])
                 while True:
                     candidate = next(candidatesCopy)
-
                     self.hslots[slotIdx][:] = list(candidate)
-                    if(self.debug%100000==0):
+                    if(self.debug%200000==0):
                         print(self.debug,slotIdx,candidate)
                         print(self.grid)
                     self.debug+=1
@@ -572,10 +571,13 @@ class Crossword:
                         # Proceed to next slot if successful
                         stack.append((slotIdx,pattern, candidatesCopy))
                         try:
+                            # keyIdx=self.hslotsKeys.index(slotIdx) + 1
+                            # if(keyIdx>=len(self.hslotsKeys)):
+                            #     return True
                             slotIdx = self.hslotsKeys[self.hslotsKeys.index(slotIdx) + 1]
                             nextCandidates=self.candidates[slotIdx]
                             break
-                        except KeyError:
+                        except IndexError:
                             return True
                     else:
                         # Undo placement if it fails validation
@@ -587,6 +589,7 @@ class Crossword:
                     return False
                 slotIdx=stack[-1][0]
                 nextCandidates=stack[-1][2]
+                self.hslots[slotIdx][:] = list(stack[-1][1])
                 stack.pop()  # Remove current slot from stack to backtrack
 
         return self.isSolved()
