@@ -46,47 +46,100 @@
 
 
 # DEFINE AN ERROR CLASS HERE
+import sys
+import traceback
+
+class BuildingError(Exception):
+    def __init__(self, *args):
+        sys.excepthook = custom_excepthook
+
+    # def __str__(self):
+    #     return "That makes no sense!"
+    pass
+def custom_excepthook(exc_type, exc_value, exc_traceback):
+        module_name = exc_type.__module__
+        if module_name and module_name != "builtins":
+            full_exception_name = f"{module_name}.{exc_type.__name__}"
+        else:
+            full_exception_name = exc_type.__name__
+            
+        print("Traceback (most recent call last):")
+        print("...")
+        print(f"{full_exception_name}: {exc_value}")
 
 class Building:
     number_created=0
     def __init__(self,height,entries) -> None:
         # print(height)
-        print('init:',height,entries)
+        # print('init:',height,entries)
         self.height=height
         self.entries=entries.split(' ')
         self.populations={}
         for i in range(height):
-            self.populations[i]=0
+            self.populations[i]={}
         Building.number_created+=1
-
+        self.currentFloor={}
+        
     def __repr__(self) -> str:
         return f"Building({self.height}, '{' '.join(self.entries)}')"
 
     def __str__(self) -> str:
         return f"Building with {self.height+1} floor{'s' if self.height>0 else ''} accessible from entries: {', '.join(self.entries)}"
-
-    class BuildingError(Exception):
-
-        pass
-    def go_to_floor_from_entry(self,floor, entry, nb_of_people):
-        if(floor<0 or  floor>=self.height or entry not in self.entries or nb_of_people<=0):
-            raise self.BuildingError("That makes no sense!").with_traceback('...')
-        print('go to floor:',floor,entry,nb_of_people)
     
-    def leave_floor_from_entry(self,floor, entry, nb_of_people):
-        if(floor<0 or floor>=self.height or entry not in self.entries or nb_of_people<=0 or self.populations[floor]<nb_of_people):
-            raise self.BuildingError("That makes no sense!").with_traceback('...')
-        print('leave floor:',floor,entry,nb_of_people)
+    def sum(self):
+        sump=0
+        for _,v1 in self.populations.items():
+            for _,v2 in v1.items():
+                sump+=v2
+        return sump
 
-    pass
+    def go_to_floor_from_entry(self,floor, entry, nb_of_people):
+        # print('go to floor:',floor,entry,nb_of_people)
+        if(entry in self.currentFloor and self.currentFloor!=0):
+            diff=self.currentFloor[entry]
+            print(f"Wait, lift has to go down {diff} floor{'s' if diff>1 else ''}...")
+            # return
+        if(floor<0 or  floor>=self.height or entry not in self.entries or nb_of_people<=0):
+            raise BuildingError("That makes no sense!")
+        if(entry not in self.populations[floor]):
+            self.populations[floor][entry]=nb_of_people
+        else:
+            self.populations[floor][entry]+=nb_of_people
+        self.currentFloor[entry]=floor
+
+    def leave_floor_from_entry(self,floor, entry, nb_of_people):
+        # print('leave floor:',floor,entry,nb_of_people)
+        if(entry in self.currentFloor and self.currentFloor!=floor):
+            diff=floor-self.currentFloor[entry]
+            print(f"Wait, lift has to go {'down' if diff<0 else 'up'} {abs(diff)} floor{'s' if abs(diff)>1 else ''}...")
+            # return
+        if(floor<0 or floor>=self.height or entry not in self.entries or nb_of_people<=0):
+            raise BuildingError("That makes no sense!")
+        elif(entry not in self.populations[floor] or self.populations[floor][entry]<nb_of_people):
+            raise BuildingError("There aren't that many people on that floor!")
+        self.populations[floor][entry]-=nb_of_people
+        self.currentFloor[entry]=0
+        
+
+    # pass
     # REPLACE PASS WITH YOUR CODE
 
     
 def compare_occupancies(building_1, building_2):
-    pass
+    # print('compare')
+    sum1=building_1.sum()
+    sum2=building_2.sum()
+    if(sum1==sum2):
+        print("There is the same number of occupants in both buildings.")
+    elif(sum1>sum2):
+        print("There are more occupants in the first building.")
+    else:
+        print("There are more occupants in the second building.")
+    # pass
     # REPLACE PASS WITH YOUR CODE
         
-# a=Building(10,'A B C D')
-# print(repr(a))
-# b=Building(2,'F')
-# print(Building.number_created)
+if __name__=='__main__':
+    # a=Building(10,'A B C D')
+    # a.go_to_floor_from_entry(-1,'A',0)
+    the_horizons = Building(10, 'A B C D')
+    print(repr(the_horizons))
