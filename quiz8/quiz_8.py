@@ -46,26 +46,29 @@
 
 
 # DEFINE AN ERROR CLASS HERE
-import sys
-import traceback
+# import sys
+# import traceback
 
 class BuildingError(Exception):
-    def __init__(self, *args):
-        sys.excepthook = custom_excepthook
+    # def __init__(self, *args):
+        # sys.excepthook = custom_excepthook
 
     # def __str__(self):
     #     return "That makes no sense!"
     pass
-def custom_excepthook(exc_type, exc_value, exc_traceback):
-        module_name = exc_type.__module__
-        if module_name and module_name != "builtins":
-            full_exception_name = f"{module_name}.{exc_type.__name__}"
-        else:
-            full_exception_name = exc_type.__name__
+
+# def custom_excepthook(exc_type, exc_value, exc_traceback):
+#         module_name = exc_type.__module__
+#         if module_name and module_name != "builtins":
+#             full_exception_name = f"{module_name}.{exc_type.__name__}"
+#         else:
+#             full_exception_name = exc_type.__name__
             
-        print("Traceback (most recent call last):")
-        print("...")
-        print(f"{full_exception_name}: {exc_value}")
+#         print("Traceback (most recent call last):")
+#         print("...")
+#         print(f"{full_exception_name}: {exc_value}")
+
+# sys.excepthook = custom_excepthook
 
 class Building:
     number_created=0
@@ -95,12 +98,11 @@ class Building:
 
     def go_to_floor_from_entry(self,floor, entry, nb_of_people):
         # print('go to floor:',floor,entry,nb_of_people)
-        if(entry in self.currentFloor and self.currentFloor!=0):
-            diff=self.currentFloor[entry]
-            print(f"Wait, lift has to go down {diff} floor{'s' if diff>1 else ''}...")
-            # return
         if(floor<0 or  floor>=self.height or entry not in self.entries or nb_of_people<=0):
             raise BuildingError("That makes no sense!")
+        if(entry in self.currentFloor and self.currentFloor[entry]!=0):
+            diff=self.currentFloor[entry]
+            print(f"Wait, lift has to go down {diff} floor{'s' if diff>1 else ''}...")
         if(entry not in self.populations[floor]):
             self.populations[floor][entry]=nb_of_people
         else:
@@ -109,14 +111,13 @@ class Building:
 
     def leave_floor_from_entry(self,floor, entry, nb_of_people):
         # print('leave floor:',floor,entry,nb_of_people)
-        if(entry in self.currentFloor and self.currentFloor!=floor):
-            diff=floor-self.currentFloor[entry]
-            print(f"Wait, lift has to go {'down' if diff<0 else 'up'} {abs(diff)} floor{'s' if abs(diff)>1 else ''}...")
-            # return
         if(floor<0 or floor>=self.height or entry not in self.entries or nb_of_people<=0):
             raise BuildingError("That makes no sense!")
         elif(entry not in self.populations[floor] or self.populations[floor][entry]<nb_of_people):
             raise BuildingError("There aren't that many people on that floor!")
+        if(entry in self.currentFloor and self.currentFloor[entry]!=floor):
+            diff=floor-self.currentFloor[entry]
+            print(f"Wait, lift has to go {'down' if diff<0 else 'up'} {abs(diff)} floor{'s' if abs(diff)>1 else ''}...")
         self.populations[floor][entry]-=nb_of_people
         self.currentFloor[entry]=0
         
@@ -140,6 +141,30 @@ def compare_occupancies(building_1, building_2):
         
 if __name__=='__main__':
     # a=Building(10,'A B C D')
-    # a.go_to_floor_from_entry(-1,'A',0)
-    the_horizons = Building(10, 'A B C D')
-    print(repr(the_horizons))
+    # b=Building(31,'1')
+    # a.go_to_floor_from_entry(0,'B',4)
+    # b.go_to_floor_from_entry(17,'1',4)
+    # b.leave_floor_from_entry(17,'1',3)
+    # a.leave_floor_from_entry(0,'B',1)
+    # a.leave_floor_from_entry(0,'B',1)
+    # a.leave_floor_from_entry(0,'B',1)
+    a=Building(6,'A B Z')
+    a.go_to_floor_from_entry(3,'B',1)
+    a.go_to_floor_from_entry(3,'B',1)
+    a.go_to_floor_from_entry(3,'B',1)
+    a.go_to_floor_from_entry(3,'B',2)
+    a.leave_floor_from_entry(3,'B',2)
+    a.leave_floor_from_entry(3,'B',2)
+    a.go_to_floor_from_entry(4,'A',10)
+    a.go_to_floor_from_entry(5,'A',10)
+    a.go_to_floor_from_entry(2,'A',10)
+    a.leave_floor_from_entry(4,'A',2)
+    a.go_to_floor_from_entry(1,'A',10)
+    a.leave_floor_from_entry(5,'A',2)
+    a.go_to_floor_from_entry(5,'A',10)
+    a.leave_floor_from_entry(5,'B',2)
+
+
+    
+    # the_horizons = Building(10, 'A B C D')
+    # print(repr(the_horizons))
