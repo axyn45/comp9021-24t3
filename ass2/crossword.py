@@ -474,9 +474,14 @@ class Crossword:
         if(len(npattern)==1):
             if(npattern in prevAnchor[idx].keys()):
                 del prevAnchor[idx][npattern]
-        if(npattern[0] in prevAnchor[idx].keys()):
+        if(npattern[0] in copy.deepcopy(prevAnchor[idx]).keys()):
             self.reduceTrieWithNegativePattern(prevAnchor[idx],npattern[0],npattern[1:])
-        
+            try:
+                if(len(prevAnchor[idx][npattern[0]])==0):
+                    del prevAnchor[idx]
+            except KeyError:
+                pass
+        pass
         # if(isinstance(prevAnchor,str) and not pattern):
         #     return True
         # result=False
@@ -536,25 +541,29 @@ class Crossword:
     def fitNextWord(self,slotIdx,trie,checkpoint=None):
         pattern=self.slot2str(self.hslots[slotIdx])
         candidates=self.enumTrieFrom(trie,checkpoint)
-
+        newtrie=copy.deepcopy(trie)
         # candidates,backup=tee(candidates)
         while True:
             try:
                 word=next(candidates)
             except StopIteration:
                 break
-            if(self.debug%200000==0):
+            if(self.debug%1000==0):
                 print(self.debug,slotIdx,word)
                 print(self.grid)
-            self.debug+=1
             self.hslots[slotIdx][:]=list(word)
+            self.debug+=1
+            a=self.slot2str(self.slots[('v',(0,0))])
+            if(a=='AC  '):
+                pass
             result=self.validateVertical(slotIdx)
             if(result==0):
-                self.steptracks.append((slotIdx,pattern,trie))
+                self.steptracks.append((slotIdx,pattern,newtrie))
                 return True
             else:
-                trie=self.reduceTrieWithNegativePattern({0:trie},0,self.slot2str(self.slots[slotIdx])[:result])
-                candidates=self.enumTrieFrom(trie,word[:result-1])
+                npattern=self.slot2str(self.slots[slotIdx])[:result]
+                self.reduceTrieWithNegativePattern({0:newtrie},0,npattern)
+                candidates=self.enumTrieFrom(newtrie,word[:result-1])
                 self.hslots[slotIdx][:]=list(pattern)
                 continue
         return False
@@ -563,8 +572,8 @@ class Crossword:
     def backtrack(self,idx,trie=None,checkpoint=None):
         if(not idx):
             return True
-        newtrie=copy.deepcopy(trie)
-        if(self.fitNextWord(idx,newtrie,checkpoint)):
+        # newtrie=copy.deepcopy(trie)
+        if(self.fitNextWord(idx,trie,checkpoint)):
             if(self.hslotsKeys.index(idx)>=len(self.hslots)-1):
                 return self.backtrack(0,None)
             nextKey=self.hslotsKeys[self.hslotsKeys.index(idx)+1]
