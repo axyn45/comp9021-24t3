@@ -19,6 +19,8 @@ class Crossword:
         self.matchCache={}
         self.wordTrie={}
         self.debug=0
+        self.blanks={}
+        self.intersectionCache={}
 
         # with open('ass2/dictionary.txt','r') as d:
         #     self.dictionary=np.array(list(d))
@@ -218,7 +220,48 @@ class Crossword:
             self.hslotsKeys.append(i)
         for i in self.vslots.keys():
             self.vslotsKeys.append(i)
-        
+
+        hblanks={}
+        vblanks={}
+        for i in range(self.height):
+            for j in range(self.width):
+                if(not self.grid[i][j].strip()):
+                    hblanks[i,j]=self.grid[i,j]
+        for i in range(self.width):
+            for j in range(self.height):
+                if(not self.grid[j][i].strip()):
+                    vblanks[j,i]=self.grid[j,i]
+        self.blanks=[]
+        def coH():
+            for k,v in hblanks.items():
+                if(k in self.blanks):
+                    continue
+                else:
+                    self.blanks.append(k)
+                    yield 0
+            yield 0
+        def coV():
+            for k,v in vblanks.items():
+                if(k in self.blanks):
+                    continue
+                else:
+                    self.blanks.append(k)
+                    yield True
+            yield False
+        flag='h'
+        a=coH()
+        b=coV()
+        for i in range(len(hblanks)):
+            next(a)
+            next(b)
+            if(len(self.blanks)==len(hblanks)):
+                break
+        self.blanksKeys=list(self.blanks.keys())
+                
+        # self.blanks[(0,0)]='a'
+        self.slotLen={}
+        for k,v in self.hSlotLut.items():
+            self.slotLen[k]=(self.slots[self.hSlotLut[k]].size,self.slots[self.vSlotLut[k]].size)
         pass
 
         self.slots={}
@@ -609,50 +652,103 @@ class Crossword:
                 return False
         return True
 
-    def fitNextWord(self,slotIdx,checkpoint=None):
-        pattern=self.slot2str(self.hslots[slotIdx])
-        candidates=self.enumTrieFrom(self.slotTries[slotIdx],checkpoint)
-        # newtrie=copy.deepcopy(trie)
-        # candidates,backup=tee(candidates)
-        while True:
-            try:
-                word=next(candidates)
-            except StopIteration:
-                break
-            if(self.debug%10000==0):
-                print(self.debug,slotIdx,word)
-                print(self.grid)
-            self.slots[slotIdx][:]=list(word)
-            self.debug+=1
-            # a=self.slot2str(self.slots[('v',(0,0))])
-            # if(a=='AC  '):
-            #     pass
-            result=self.validateVertical(slotIdx)
-            if(result==0):
-                self.steptracks.append((slotIdx,pattern,checkpoint))
-                return True
+    def getPreffix(self,h,v):
+        hPre=''
+        vPre=''
+        if(v>0):
+            for i in range(v-1,-1,-1):
+                if(self.grid[h,i]=='*'):
+                    break
+                else:
+                    hPre=self.grid[h,i]+hPre
+        if(h>0):
+            for i in range(h-1,-1,-1):
+                if(self.grid[h,i]=='*'):
+                    break
+                else:
+                    vPre=self.grid[i,v]+vPre
+        return hPre,vPre
+    
+    def getLettersWithPreffix(self,trie,prefx):
+        cur=0
+        letters=[]
+        for i in range(len(prefx)):
+            if(prefx[i] not in trie):
+                return []
             else:
-                npattern=self.slot2str(self.slots[slotIdx])[:result]
-                self.reduceTrieWithNegativePattern({0:newtrie},0,npattern)
-                candidates=self.enumTrieFrom(newtrie,word[:result-1])
-                self.slots[slotIdx][:]=list(pattern)
-                continue
-        return False
+                trie=trie[prefx[i]]
+        return list(trie.keys())
+
+    def getIntersection(self,h,v):
+        hp,vp=self.getPreffix(h,v)
+        hlen,vlen=self.slotLen[h,v]
+        try:
+            return self.intersectionCache[hlen,vlen,hp,vp]
+        except KeyError:
+            pass
+        hl=self.getLettersWithPreffix(self.slotTries[self.hSlotLut[h,v]],hp)
+        vl=self.getLettersWithPreffix(self.slotTries[self.vSlotLut[h,v]],vp)
+        res=[i for i in hl if i in vl]
+        self.intersectionCache[hlen,vlen,hp,vp]=res
+        return res
+        
+
+
+    def fitNextLetter(self,h,v,checkpoint=-1):
+        letters=self.getIntersection(h,v)
+        cur=checkpoint+1
+        if(not letters or cur>=len(letters)):
+            return False
+        self.grid[h,v]=letters[cur]
+        self.steptracks.append((h,v),cur)
+
+
+
+        # pattern=self.slot2str(self.hslots[slotIdx])
+        # candidates=self.enumTrieFrom(self.slotTries[slotIdx],checkpoint)
+        # # newtrie=copy.deepcopy(trie)
+        # # candidates,backup=tee(candidates)
+        # while True:
+        #     try:
+        #         word=next(candidates)
+        #     except StopIteration:
+        #         break
+        #     if(self.debug%10000==0):
+        #         print(self.debug,slotIdx,word)
+        #         print(self.grid)
+        #     self.slots[slotIdx][:]=list(word)
+        #     self.debug+=1
+        #     # a=self.slot2str(self.slots[('v',(0,0))])
+        #     # if(a=='AC  '):
+        #     #     pass
+        #     result=self.validateVertical(slotIdx)
+        #     if(result==0):
+        #         self.steptracks.append((slotIdx,pattern,checkpoint))
+        #         return True
+        #     else:
+        #         npattern=self.slot2str(self.slots[slotIdx])[:result]
+        #         self.reduceTrieWithNegativePattern({0:newtrie},0,npattern)
+        #         candidates=self.enumTrieFrom(newtrie,word[:result-1])
+        #         self.slots[slotIdx][:]=list(pattern)
+        #         continue
+        # return False
 
     
-    def backtrack(self,idx,trie=None,checkpoint=None):
-        if(not idx):
-            return True
+    def backtrack(self,h,v,checkpoint=-1):
+        # if(h):
+        #     return True
 
-        if(self.fitNextWord(idx,trie,checkpoint)):
-            if(self.hslotsKeys.index(idx)>=len(self.hslots)-1):
-                return self.backtrack(0,None)
-            nextKey=self.hslotsKeys[self.hslotsKeys.index(idx)+1]
-            nextTrie=self.slotTries[nextKey]
-            return self.backtrack(nextKey,nextTrie)
+        if(self.fitNextLetter(h,v,checkpoint)):
+            try:
+                nextH,nextV=self.blanksKeys[self.blanksKeys.index(h,v)+1]
+            except KeyError:
+                return True
+            # nextTrie=self.slotTries[nextKey]
+            return self.backtrack(nextH,nextV)
         return False
 
     def placeWords(self):
+        print(self.getPreffix(2,5))
         self.debug=0
         self.hit=0
         self.nohit=0
