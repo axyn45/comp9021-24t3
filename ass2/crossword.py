@@ -256,7 +256,7 @@ class Crossword:
             next(b)
             if(len(self.blanks)==len(hblanks)):
                 break
-        self.blanksKeys=list(self.blanks.keys())
+        # self.blanksKeys=list(self.blanks.keys())
                 
         # self.blanks[(0,0)]='a'
         self.slotLen={}
@@ -663,7 +663,7 @@ class Crossword:
                     hPre=self.grid[h,i]+hPre
         if(h>0):
             for i in range(h-1,-1,-1):
-                if(self.grid[h,i]=='*'):
+                if(self.grid[i,v]=='*'):
                     break
                 else:
                     vPre=self.grid[i,v]+vPre
@@ -699,8 +699,16 @@ class Crossword:
         cur=checkpoint+1
         if(not letters or cur>=len(letters)):
             return False
+
+        if(self.debug%100000==0):
+            print(self.debug,(h,v),letters[cur])
+            print(self.grid)
+        self.debug+=1
+        
+        
         self.grid[h,v]=letters[cur]
-        self.steptracks.append((h,v),cur)
+        self.steptracks.append(((h,v),cur))
+        return True
 
 
 
@@ -740,32 +748,32 @@ class Crossword:
 
         if(self.fitNextLetter(h,v,checkpoint)):
             try:
-                nextH,nextV=self.blanksKeys[self.blanksKeys.index(h,v)+1]
-            except KeyError:
+                nextH,nextV=self.blanks[self.blanks.index((h,v))+1]
+            except IndexError:
                 return True
             # nextTrie=self.slotTries[nextKey]
             return self.backtrack(nextH,nextV)
         return False
 
     def placeWords(self):
+        return False
         print(self.getPreffix(2,5))
         self.debug=0
         self.hit=0
-        self.nohit=0
-        if(not hasattr(self,'steptracks')):
-            self.steptracks=[]  # e=(pos:tuple; prevstate:string; start:int)
+        self.cacheSearch=0
+        self.steptracks=[]  # e=(pos:tuple; checkpoint:int)
         if(self.isSolved()):
             return True
-        slotIdx=self.slotsKeys[0]
-        checkpoint=None
-        while(not self.backtrack(slotIdx,trie,checkpoint)):
+        h,v=self.blanks[0]
+        checkpoint=-1
+        while(not self.backtrack(h,v,checkpoint)):
             if(not len(self.steptracks)):
                 return False
             lastStep=self.steptracks[-1]
-            trie=lastStep[2]
-            slotIdx=lastStep[0]
-            checkpoint=self.slot2str(self.slots[slotIdx])
-            self.slots[lastStep[0]][:]=list(lastStep[1])
+            h,v=lastStep[0]
+            # slotIdx=lastStep[0]
+            checkpoint=lastStep[1]
+            self.grid[h,v]=' '
             del self.steptracks[-1]
         # print(self.grid)
         return True
