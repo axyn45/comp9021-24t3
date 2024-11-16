@@ -523,6 +523,7 @@ class Crossword:
                 continue
             self.reduceTrie(self.slotTries,k,slotstr)
         
+        
         # self.candidates={}
         # for k,v in self.hslots.items():
         #     x=None
@@ -700,10 +701,10 @@ class Crossword:
         if(not letters or cur>=len(letters)):
             return False
 
-        if(self.debug%100000==0):
-            print(self.debug,(h,v),letters[cur])
-            print(self.grid)
-        self.debug+=1
+        # if(self.debug%100000==0):
+        #     print(self.debug,(h,v),letters[cur])
+        #     print(self.grid)
+        # self.debug+=1
         
         
         self.grid[h,v]=letters[cur]
@@ -756,8 +757,11 @@ class Crossword:
         return False
 
     def placeWords(self):
-        return False
-        print(self.getPreffix(2,5))
+        if(not hasattr(self,'words') or len(self.words)==0):
+            return False
+        if(len(self.slotTries)<len(self.slots)):
+            return False
+        # print(self.getPreffix(2,5))
         self.debug=0
         self.hit=0
         self.cacheSearch=0
@@ -838,19 +842,42 @@ class Crossword:
 
     def fill_with_given_words(self,wordsfile,texfile):
         # self.splitSlots()
+        # print(texfile)
+        # print(self.rawtex)
+
         self.loadWords(wordsfile)
         self.initWordsByLen()
-        a=self.enumTrie(self.slotTries[self.slotsKeys[0]])
-        for i in a:
-            print(i,end=' ')
-        print()
-        if(self.iterative_placeWords()):
-            print(f"I filled it!\nResult captured in filled_{texfile}")
+        # print(self.words)
+        # print(self.hslots)
+        # print(self.hSlotLut)
+        # print(self.slotTries)
+        # for i in self.slotTries:
+        #     if(not i):
+        #         return False
+        texname=texfile if texfile.startswith('filled_') else 'filled_'+texfile
+        if(self.placeWords()):
+            self.saveToTex(texname)
+            print(f"I filled it!\nResult captured in {texname}.")
         else:
             print("Hey, it can't be filled with these words!")
-        return
 
+    def saveToTex(self,texfile):
+        f=open(texfile,'w')
+        f.write('\\documentclass{standalone}\n\\usepackage{pas-crosswords}\n\\usepackage{tikz}\n\n\\begin{document}\n\\begin{tikzpicture}\n')
+        for i in range(self.height):
+            if(i==0):
+                f.write('\\gridcross{'+self.slot2str(self.grid[i]))
+            else:
+                f.write(' '*11+self.slot2str(self.grid[i]))
+            if(i!=self.height-1):
+                f.write(',')
+            f.write('%\n')
+        f.write(' '*10+'}\n')
+        f.write('\\end{tikzpicture}\n\\end{document}\n')
+        
     def solve(self,texfile,dictfile='dictionary.txt'):
+        # print(texfile)
+        # print(self.rawtex)
         start_time = time.time()
         self.loadWords(dictfile)
         self.initWordsByLen()
@@ -858,14 +885,19 @@ class Crossword:
         # for i in a:
         #     print(i,end=' ')
         # print()
+        # for i in self.slotTries:
+        #     if(not i):
+        #         return False
+        texname=texfile if texfile.startswith('solved_') else 'solved_'+texfile
         if(self.placeWords()):
-            print(f"I solved it!\nResult captured in solved_{texfile}")
+            self.saveToTex(texname)
+            print(f"I solved it!\nResult captured in {texname}.")
         else:
             print("Hey, it can't be solved!")
-        print(self.grid)
+        # print(self.grid)
         end_time = time.time()
-        print(end_time-start_time,'secs')
-        print(self.debug)
+        # print(end_time-start_time,'secs')
+        # print(self.debug)
         # print(f'{self.hit/(self.nohit+self.hit)*100}%')
         return
 
@@ -873,8 +905,8 @@ class Crossword:
 # count=0
 if __name__=='__main__':
     a=Crossword('ass2/empty_grid_3.tex')
-    print(a)
-    a.solve('tete',dictfile='ass2/dictionary.txt')
+    # print(a)
+    a.solve('test.tex',dictfile='ass2/dictionary.txt')
     # a.fill_with_given_words('ass2/words_1.txt','test.tex')
     # print(a.splitArray)
 
