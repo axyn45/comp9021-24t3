@@ -54,10 +54,47 @@ def solve(equation):
     0 + 8 = 8
     0 + 9 = 9
     '''
+    class numObj:
+        def __init__(self,raw) -> None:
+            self.raw=raw
+            self.sum=0
+            self.uksum=0
+            mul=1
+            for i in raw[::-1]:
+                if(i=='_'):
+                    self.uksum+=mul
+                else:
+                    self.sum+=mul*int(i)
+                mul*=10
+        def testN(self,n):
+            return self.sum+self.uksum*n
+        def getStrWithN(self,n):
+            res=self.raw.replace('_',str(n)).lstrip('0').lstrip('0')
+            return res if(res) else '0'
+
+    nospace=equation.replace(' ','')
+    a,b=nospace.split('+')
+    b,c=b.split('=')
+    a=numObj(a)
+    b=numObj(b)
+    c=numObj(c)
+    res=[]
+    if(a.uksum==b.uksum==c.uksum==0):
+        if(a.sum+b.sum==c.sum):
+            res.append(0)
+    else:
+        for i in range(10):
+            if(a.testN(i)+b.testN(i)==c.testN(i)):
+                res.append(i)
+    if(not res):
+        print('No solution!')
+    for i in res:
+        print(f'{a.getStrWithN(i)} + {b.getStrWithN(i)} = {c.getStrWithN(i)}')
     pass
     # REPLACE PASS ABOVE WITH YOUR CODE
         
 
 if __name__ == '__main__':
+    # solve('123 + 2_4 = 388')
     import doctest
     doctest.testmod()

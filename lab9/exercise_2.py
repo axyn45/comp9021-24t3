@@ -50,10 +50,25 @@ def positive_gaps(L):
     Gaps of 20:
       Between -9 and 11
     '''
-    pass
+    gaps={}
+    for i in range(1,len(L)):
+        gap=L[i]-L[i-1]
+        if(gap>0):
+            try:
+              gaps[gap].add((L[i-1],L[i]))
+            except KeyError:
+              gaps[gap]={(L[i-1],L[i])}
+    gaps={k:v for k,v in sorted(gaps.items(),key=lambda x:x[0])}
+    for k,v in gaps.items():
+      print(f'Gaps of {k}:')
+      for i in v:
+         print(f'  Between {i[0]} and {i[1]}')
+
+    # pass
     # REPLACE PASS ABOVE WITH YOUR CODE
                 
 
 if __name__ == '__main__':
+    # positive_gaps([11, -10, -9, 11, 15, 8, -5])
     import doctest
     doctest.testmod()

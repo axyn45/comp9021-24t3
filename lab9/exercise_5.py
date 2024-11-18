@@ -143,9 +143,33 @@ def paths(for_seed, density, top, bottom):
     grid = [[int(randrange(density) != 0) for _ in range(dim)]
                  for _ in range(dim)
            ]
+    # print(grid)
     print('Here is the grid that has been generated:')
     display(grid)
     # INSERT YOUR CODE HERE
+    newgrid = [[0 for _ in range(dim)]
+                 for _ in range(dim)
+           ]
+    def helper(i,j,endi,endj):
+        if(not (0<=i<dim and 0<=j<dim and grid[i][j])):
+            return False
+        if(i==endi and j==endj):
+            newgrid[i][j]=1
+            return True
+        
+        
+        flag=False
+        flag|=helper(i+1,j-1,endi,endj)
+        flag|=helper(i+1,j,endi,endj)
+        flag|=helper(i+1,j+1,endi,endj)
+        if(flag):
+            newgrid[i][j]=1
+
+        return flag
+    helper(0,top,dim-1,bottom)
+    grid=newgrid
+
+        
     print()
     print(f'Here are all paths from', top, 'at the top '
           'to', bottom, 'at the bottom:'
@@ -157,5 +181,6 @@ def paths(for_seed, density, top, bottom):
                 
 
 if __name__ == '__main__':
+    # paths(0, 4, 0, 2)
     import doctest
     doctest.testmod()
