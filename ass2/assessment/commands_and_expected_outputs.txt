@@ -1,0 +1,190 @@
+TEST 1 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_1.tex'); print(C)"
+A grid of width 3 and height 3, with no blackcases, filled with no letters,
+with no complete vertical words and no complete horizontal words.
+TEST 1 END
+
+TEST 2 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_2.tex'); print(C)"
+A grid of width 9 and height 9, with 21 blackcases, filled with 41 letters,
+with 3 complete vertical words and 5 complete horizontal words.
+TEST 2 END
+
+TEST 3 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_3.tex'); print(C)"
+A grid of width 15 and height 15, with 40 blackcases, filled with 141 letters,
+with 20 complete vertical words and 18 complete horizontal words.
+TEST 3 END
+
+TEST 4 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_4.tex'); print(C)"
+A grid of width 5 and height 5, with 2 blackcases, filled with no letters,
+with no complete vertical words and no complete horizontal words.
+TEST 4 END
+
+TEST 5 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_5.tex'); print(C)"
+A grid of width 4 and height 11, with 3 blackcases, filled with no letters,
+with no complete vertical words and no complete horizontal words.
+TEST 5 END
+
+TEST 6 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_6.tex'); print(C)"
+A grid of width 7 and height 5, with 2 blackcases, filled with no letters,
+with no complete vertical words and no complete horizontal words.
+TEST 6 END
+
+TEST 7 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_7.tex'); print(C)"
+A grid of width 4 and height 7, with no blackcases, filled with no letters,
+with no complete vertical words and no complete horizontal words.
+TEST 7 END
+
+TEST 8 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_8.tex'); print(C)"
+A grid of width 9 and height 9, with 23 blackcases, filled with no letters,
+with no complete vertical words and no complete horizontal words.
+TEST 8 END
+
+TEST 9 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('unsolvable_crossword_9.tex'); print(C)"
+A grid of width 9 and height 9, with 22 blackcases, filled with 18 letters,
+with 1 complete vertical word and 2 complete horizontal words.
+TEST 9 END
+
+TEST 10 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('unsolvable_crossword_10.tex'); print(C)"
+A grid of width 15 and height 15, with 40 blackcases, filled with 29 letters,
+with 2 complete vertical words and 1 complete horizontal word.
+TEST 10 END
+
+TEST 11 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_1.tex'); C.fill_with_given_words('solvable_words_1.txt', 'filled_solvable_1.tex'); from test_solution import *; print(test_filling('solvable_crossword_1.tex', 'solvable_words_1.txt', 'filled_solvable_1.tex'))"
+I filled it!
+Result captured in filled_solvable_1.tex.
+True
+TEST 11 END
+
+TEST 12 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_2.tex'); C.fill_with_given_words('solvable_words_2.txt', 'filled_solvable_2.tex'); from test_solution import *; print(test_filling('solvable_crossword_2.tex', 'solvable_words_2.txt', 'filled_solvable_2.tex'))"
+I filled it!
+Result captured in filled_solvable_2.tex.
+True
+TEST 12 END
+
+TEST 13 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_3.tex'); C.fill_with_given_words('solvable_words_3.txt', 'filled_solvable_3.tex'); from test_solution import *; print(test_filling('solvable_crossword_3.tex', 'solvable_words_3.txt', 'filled_solvable_3.tex'))"
+I filled it!
+Result captured in filled_solvable_3.tex.
+True
+TEST 13 END
+
+TEST 14 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_4.tex'); C.fill_with_given_words('solvable_words_4.txt', 'filled_solvable_4.tex'); from test_solution import *; print(test_filling('solvable_crossword_4.tex', 'solvable_words_4.txt', 'filled_solvable_4.tex'))"
+I filled it!
+Result captured in filled_solvable_4.tex.
+True
+TEST 14 END
+
+TEST 15 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_5.tex'); C.fill_with_given_words('solvable_words_5.txt', 'filled_solvable_5.tex'); from test_solution import *; print(test_filling('solvable_crossword_5.tex', 'solvable_words_5.txt', 'filled_solvable_5.tex'))"
+I filled it!
+Result captured in filled_solvable_5.tex.
+True
+TEST 15 END
+
+TEST 16 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_6.tex'); C.fill_with_given_words('solvable_words_6.txt', 'filled_solvable_6.tex'); from test_solution import *; print(test_filling('solvable_crossword_6.tex', 'solvable_words_6.txt', 'filled_solvable_6.tex'))"
+I filled it!
+Result captured in filled_solvable_6.tex.
+True
+TEST 16 END
+
+TEST 17 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_7.tex'); C.fill_with_given_words('solvable_words_7.txt', 'filled_solvable_7.tex'); from test_solution import *; print(test_filling('solvable_crossword_7.tex', 'solvable_words_7.txt', 'filled_solvable_7.tex'))"
+I filled it!
+Result captured in filled_solvable_7.tex.
+True
+TEST 17 END
+
+TEST 18 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_8.tex'); C.fill_with_given_words('solvable_words_8.txt', 'filled_solvable_8.tex'); from test_solution import *; print(test_filling('solvable_crossword_8.tex', 'solvable_words_8.txt', 'filled_solvable_8.tex'))"
+I filled it!
+Result captured in filled_solvable_8.tex.
+True
+TEST 18 END
+
+TEST 19 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_1.tex'); C.solve('solved_solvable_1.tex'); from test_solution import *; print(test_solving('solvable_crossword_1.tex', 'solved_solvable_1.tex'))"
+I solved it!
+Result captured in solved_solvable_1.tex.
+True
+TEST 19 END
+
+TEST 20 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_2.tex'); C.solve('solved_solvable_2.tex'); from test_solution import *; print(test_solving('solvable_crossword_2.tex', 'solved_solvable_2.tex'))"
+I solved it!
+Result captured in solved_solvable_2.tex.
+True
+TEST 20 END
+
+TEST 21 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_3.tex'); C.solve('solved_solvable_3.tex'); from test_solution import *; print(test_solving('solvable_crossword_3.tex', 'solved_solvable_3.tex'))"
+I solved it!
+Result captured in solved_solvable_3.tex.
+True
+TEST 21 END
+
+TEST 22 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_4.tex'); C.solve('solved_solvable_4.tex'); from test_solution import *; print(test_solving('solvable_crossword_4.tex', 'solved_solvable_4.tex'))"
+I solved it!
+Result captured in solved_solvable_4.tex.
+True
+TEST 22 END
+
+TEST 23 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_5.tex'); C.solve('solved_solvable_5.tex'); from test_solution import *; print(test_solving('solvable_crossword_5.tex', 'solved_solvable_5.tex'))"
+I solved it!
+Result captured in solved_solvable_5.tex.
+True
+TEST 23 END
+
+TEST 24 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_6.tex'); C.solve('solved_solvable_6.tex'); from test_solution import *; print(test_solving('solvable_crossword_6.tex', 'solved_solvable_6.tex'))"
+I solved it!
+Result captured in solved_solvable_6.tex.
+True
+TEST 24 END
+
+TEST 25 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_7.tex'); C.solve('solved_solvable_7.tex'); from test_solution import *; print(test_solving('solvable_crossword_7.tex', 'solved_solvable_7.tex'))"
+I solved it!
+Result captured in solved_solvable_7.tex.
+True
+TEST 25 END
+
+TEST 26 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('solvable_crossword_8.tex'); C.solve('solved_solvable_8.tex'); from test_solution import *; print(test_solving('solvable_crossword_8.tex', 'solved_solvable_8.tex'))"
+I solved it!
+Result captured in solved_solvable_8.tex.
+True
+TEST 26 END
+
+TEST 27 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('unsolvable_crossword_9.tex'); C.solve('_.tex'); C.fill_with_given_words('unfillable_words_9.txt', '_.tex'); C.fill_with_given_words('fillable_words_9.txt', 'filled_unsolvable_9.tex'); from test_solution import *; print(test_filling('unsolvable_crossword_9.tex', 'fillable_words_9.txt', 'filled_unsolvable_9.tex'))"
+Hey, it can't be solved!
+Hey, it can't be filled with these words!
+I filled it!
+Result captured in filled_unsolvable_9.tex.
+True
+TEST 27 END
+
+TEST 28 BEGIN
+$ python3 -c "from crossword import *; C = Crossword('unsolvable_crossword_10.tex'); C.solve('_.tex'); C.fill_with_given_words('unfillable_words_10.txt', '_.tex'); C.fill_with_given_words('fillable_words_10.txt', 'filled_unsolvable_10.tex'); from test_solution import *; print(test_filling('unsolvable_crossword_10.tex', 'fillable_words_10.txt', 'filled_unsolvable_10.tex'))"
+Hey, it can't be solved!
+Hey, it can't be filled with these words!
+I filled it!
+Result captured in filled_unsolvable_10.tex.
+True
+TEST 28 END
+

@@ -140,8 +140,9 @@ class Crossword:
                         for k in range(startpos,j):
                             self.vSlotLut[(k,i)]=('v',(startpos,i))
                     startpos=j+1
-        for i in range(self.width):
+        for i in range(self.height):
             parseHorizontal(i)
+        for i in range(self.width):
             parseVertical(i)
         
         
@@ -511,9 +512,11 @@ class Crossword:
 
 
 if __name__=='__main__':
-    a=Crossword('ass2/empty_grid_3.tex')
-    print(a)
-    a.solve('test.tex',dictfile='ass2/dictionary.txt')
+    C = Crossword('ass2/input/solvable_crossword_5.tex')
+    C.fill_with_given_words('ass2/input/solvable_words_5.txt', 'ass2/filled_solvable_5.tex')
+    # a=Crossword('ass2/empty_grid_3.tex')
+    # print(a)
+    # a.solve('test.tex',dictfile='ass2/dictionary.txt')
 
 
 

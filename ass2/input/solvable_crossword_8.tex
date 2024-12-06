@@ -1,0 +1,18 @@
+\documentclass{standalone}
+\usepackage{pas-crosswords}
+\usepackage{tikz}
+
+\begin{document}
+\begin{tikzpicture}
+\begin{crossgrid}[h=9, v=9]
+% A vertical symmetry!
+
+\blackcases{%
+9/7, 1/8, 2/8, 8/8, 9/ 8, 1/9, 2/9, 3/9, 7/9, 8/9, 9/9, 1/1,% One more on this line
+2/1, 3/1, 7/1, 8/1, 9/1, 1/2, 9/2, 6/4, 5/5, 4/6, 1/7        %
+}
+
+
+\end{crossgrid}
+\end{tikzpicture}
+\end{document}
